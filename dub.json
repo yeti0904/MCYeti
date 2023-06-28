@@ -1,0 +1,12 @@
+{
+	"authors": [
+		"yeti0904"
+	],
+	"copyright": "Copyright © 2023, yeti0904",
+	"dependencies": {
+		"dauth": "~>0.6.4"
+	},
+	"description": "A Minecraft Classic server software",
+	"license": "GPL-3.0-or-later",
+	"name": "mcyeti"
+}
