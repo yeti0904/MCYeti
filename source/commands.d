@@ -420,7 +420,7 @@ class GotoCommand : Command {
 		server.SendPlayerToWorld(client, args[0]);
 
 		server.SendGlobalMessage(
-			format("%s &ewent to %a", client.username, args[0])
+			format("&f%s &ewent to &a%s", client.username, args[0])
 		);
 	}
 }
