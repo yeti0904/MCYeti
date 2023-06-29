@@ -201,6 +201,11 @@ class Client {
 					return;
 				}
 
+				if (server.config.owner == username) {
+					info["rank"] = 0xF0;
+					SaveInfo();
+				}
+
 				auto identification = new S2C_Identification();
 
 				identification.protocolVersion = 0x07;

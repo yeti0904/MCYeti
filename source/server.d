@@ -28,6 +28,7 @@ struct ServerConfig {
 	string name;
 	bool   publicServer;
 	string motd;
+	string owner;
 }
 
 class ServerException : Exception {
@@ -121,7 +122,8 @@ class Server {
 		    config.publicServer? "true" : "false"
 		);
 
-		string serverURL;
+		static string oldServerURL;
+		string        serverURL;
 
 		try {
 			serverURL = cast(string) get(url);
@@ -130,9 +132,11 @@ class Server {
 			writefln("Error in heartbeat: %s", e.msg);
 		}
 
-		if (ticks == 0) {
+		if (serverURL != oldServerURL) {
 			writefln("Server URL: %s", serverURL);
 		}
+
+		oldServerURL = serverURL;
 	}
 
 	void Init() {
@@ -164,6 +168,7 @@ class Server {
 		ret["name"]         = config.name;
 		ret["publicServer"] = config.publicServer;
 		ret["motd"]         = config.motd;
+		ret["owner"]        = config.owner;
 
 		return ret;
 	}
@@ -179,6 +184,7 @@ class Server {
 		config.name         = json["name"].str;
 		config.publicServer = json["publicServer"].boolean;
 		config.motd         = json["motd"].str;
+		config.owner        = json["owner"].str;
 	}
 
 	ubyte GetRank(string name) {

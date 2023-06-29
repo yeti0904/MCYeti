@@ -110,10 +110,19 @@ class InfoCommand : Command {
 		}
 
 		client.SendMessage(format("&aInfo for &e%s", username));
-		client.SendMessage(format("  &aRank:&e 0x%X", info["rank"].integer));
+		client.SendMessage(
+			format(
+				"  &aRank:&e %s",
+				server.GetRankName(cast(ubyte) info["rank"].integer)
+			)
+		);
 
 		if (info["banned"].boolean) {
-			client.SendMessage(format("  &aIs banned"));
+			client.SendMessage("  &aPlayer is banned");
+		}
+
+		if (server.config.owner == username) {
+			client.SendMessage("  &aPlayer is the server owner");
 		}
 	}
 }
@@ -288,6 +297,7 @@ class ServerInfoCommand : Command {
 	override void Run(Server server, Client client, string[] args) {
 		client.SendMessage(format("&eAbout &a%s", server.config.name));
 		client.SendMessage("  &eRunning &aMCYeti");
+		client.SendMessage(format("  &eOwner: &a%s", server.config.owner));
 	}
 }
 
@@ -456,5 +466,36 @@ class NewLevelCommand : Command {
 		world.Save();
 
 		server.worlds ~= world;
+
+		client.SendMessage("&aCreated level");
+	}
+}
+
+class LevelsCommand : Command {
+	this() {
+		name = "levels";
+		help = [
+			"&a/levels",
+			"&eShows all levels"
+		];
+		permission = 0x00;
+	}
+
+	override void Run(Server server, Client client, string[] args) {
+		string folder = dirName(thisExePath()) ~ "/worlds";
+
+		uint amount;
+
+		client.SendMessage(format("&eAvailable levels:"));
+
+		foreach (entry ; dirEntries(folder, SpanMode.shallow)) {
+			string name = baseName(entry.name).stripExtension();
+
+			client.SendMessage(format("  &a%s", name));
+
+			++ amount;
+		}
+
+		client.SendMessage(format("&a%d&e levels", amount));
 	}
 }

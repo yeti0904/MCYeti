@@ -35,6 +35,7 @@ class CommandManager {
 		LoadCommand(new PervisitCommand());
 		LoadCommand(new GotoCommand());
 		LoadCommand(new NewLevelCommand());
+		LoadCommand(new LevelsCommand());
 	}
 
 	void LoadCommand(Command command) {
