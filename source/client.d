@@ -46,11 +46,18 @@ class Client {
 	}
 
 	void SendMessage(string msg) {
-		auto message = new S2C_Message();
+		bool firstSend = true;
+		while (msg.length > 0) {
+			auto message = new S2C_Message();
 
-		message.id       = cast(byte) 255;
-		message.message  = msg;
-		outBuffer       ~= message.CreateData();
+			message.id       = cast(byte) 0;
+			message.message  = msg[0 .. (min(64, msg.length))];
+			outBuffer       ~= message.CreateData();
+
+			msg = msg[min(64, msg.length) .. $];
+
+			firstSend = false;
+		}
 	}
 
 	bool SendData(Server server) {

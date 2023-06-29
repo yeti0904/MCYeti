@@ -207,7 +207,7 @@ class Server {
 		string[] ips;
 
 		foreach (client ; clients) {
-			if (!ips.canFind(client.ip)) {
+			if (client.authenticated && !ips.canFind(client.ip)) {
 				ips ~= client.ip;
 			}
 		}
@@ -261,13 +261,19 @@ class Server {
 	}
 
 	void SendGlobalMessage(string message) {
-		auto packet    = new S2C_Message();
+		/*auto packet    = new S2C_Message();
 		packet.id      = 0x00;
 		packet.message = message;
 
 		foreach (ref client ; clients) {
 			if (client.authenticated) {
 				client.outBuffer ~= packet.CreateData();
+			}
+		}*/
+
+		foreach (ref client ; clients) {
+			if (client.authenticated) {
+				client.SendMessage(message);
 			}
 		}
 
