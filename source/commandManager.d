@@ -36,6 +36,7 @@ class CommandManager {
 		LoadCommand(new GotoCommand());
 		LoadCommand(new NewLevelCommand());
 		LoadCommand(new LevelsCommand());
+		LoadCommand(new PlayersCommand());
 	}
 
 	void LoadCommand(Command command) {

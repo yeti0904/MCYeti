@@ -418,6 +418,10 @@ class GotoCommand : Command {
 		}
 
 		server.SendPlayerToWorld(client, args[0]);
+
+		server.SendGlobalMessage(
+			format("%s &ewent to %a", client.username, args[0])
+		);
 	}
 }
 
@@ -486,7 +490,7 @@ class LevelsCommand : Command {
 
 		uint amount;
 
-		client.SendMessage(format("&eAvailable levels:"));
+		client.SendMessage("&eAvailable levels:");
 
 		foreach (entry ; dirEntries(folder, SpanMode.shallow)) {
 			string name = baseName(entry.name).stripExtension();
@@ -497,5 +501,40 @@ class LevelsCommand : Command {
 		}
 
 		client.SendMessage(format("&a%d&e levels", amount));
+	}
+}
+
+class PlayersCommand : Command {
+	this() {
+		name = "players";
+		help = [
+			"&a/players",
+			"&eShows all online players"
+		];
+		permission = 0x00;
+	}
+
+	override void Run(Server server, Client client, string[] args) {
+		client.SendMessage("&ePlayers online:");
+
+		foreach (ref clienti ; server.clients) {
+			if (clienti.authenticated) {
+				if (clienti.world) {
+					client.SendMessage(
+						format(
+							"  &a%s (%s)", clienti.username,
+							clienti.world.GetName()
+						)
+					);
+				}
+				else {
+					client.SendMessage(format("  &a%s", clienti.username));
+				}
+			}
+		}
+
+		client.SendMessage(
+			format("&a%d&e players online", server.clients.length)
+		);
 	}
 }
