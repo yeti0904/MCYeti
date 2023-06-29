@@ -410,7 +410,7 @@ class Server {
 			}
 		}
 
-		if (ticks % 1500 == 0) {
+		if (ticks % 750 == 0) {
 			RunHeartbeat();
 			SaveAll();
 		}
