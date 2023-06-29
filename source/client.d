@@ -153,8 +153,6 @@ class Client {
 				}
 				else {
 					server.Kick(this, "Incorrect mppass");
-					writeln(correctMppass);
-					writeln(packet.mppass);
 					return;
 				}
 
