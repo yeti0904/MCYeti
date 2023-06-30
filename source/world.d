@@ -109,9 +109,11 @@ class World {
 
 		auto data = cast(ubyte[]) read(worldPath);
 
+		size = Vec3();
 		size.x          = data[0 .. 2].bigEndianToNative!ushort();
 		size.y          = data[2 .. 4].bigEndianToNative!ushort();
 		size.z          = data[4 .. 6].bigEndianToNative!ushort();
+		spawn = Vec3();
 		spawn.x         = data[6 .. 8].bigEndianToNative!ushort();
 		spawn.y         = data[8 .. 10].bigEndianToNative!ushort();
 		spawn.z         = data[10 .. 12].bigEndianToNative!ushort();
@@ -120,6 +122,10 @@ class World {
 
 		blocks = data[512 .. $];
 		debug writef("Read blocks, size: %d\n", blocks.length);
+
+		if (size.x * size.y * size.z != blocks.length) {
+			throw new WorldException("Block array size does not match volume of map");
+		}
 	}
 
 	void Save() {
