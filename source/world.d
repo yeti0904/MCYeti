@@ -153,6 +153,7 @@ class World {
 
 	void GenerateFlat() {
 		blocks = CreateBlockArray();
+		debug writef("Got an array, size: %d\n", blocks.length);
 
 		for (short y = 0; y < size.y; ++y) {
 			for (short z = 0; z < size.z; ++z) {
@@ -322,7 +323,9 @@ class World {
 
 	ubyte[] CreateBlockArray() {
 		debug writef("The world size is %d block(s)\n", (size.y * size.z * size.x));
+		ubyte[] created = new ubyte[](size.x * size.y * size.z);
+		debug writef("created.length is %d\n", created.length);
 
-		return new ubyte[](size.x * size.y * size.z);
+		return created;
 	}
 }
