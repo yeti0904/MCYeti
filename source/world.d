@@ -163,9 +163,9 @@ class World {
 		blocks = CreateBlockArray();
 		debug writef("Got an array, size: %d\n", blocks.length);
 
-		for (ushort y = 0; y < size.y; ++y) {
-			for (ushort z = 0; z < size.z; ++z) {
-				for (ushort x = 0; x < size.x; ++x) {
+		for (ushort x = 0; x < size.x; ++x) {
+			for (ushort y = 0; y < size.y; ++y) {
+				for (ushort z = 0; z < size.z; ++z) {
 					ubyte type;
 					if (y > size.y / 2) {
 						type = Block.Air;
