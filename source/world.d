@@ -119,6 +119,7 @@ class World {
 		permissionVisit = data[13];
 
 		blocks = data[512 .. $];
+		debug writef("Read blocks, size: %d\n", blocks.length);
 	}
 
 	void Save() {
