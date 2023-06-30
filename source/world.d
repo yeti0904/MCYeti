@@ -180,19 +180,15 @@ class World {
 		return blocks[GetIndex(x, y, z)];
 	}
 
-	void SetBlock(ushort x, ushort y, ushort z, ubyte block) {
-		SetBlock(x, y, z, block, true);
-	}
-
-	void SetBlock(ushort x, ushort y, ushort z, ubyte block, bool sendPacket) {
+	void SetBlock(ushort x, ushort y, ushort z, ubyte block, bool sendPacket = true) {
 		blocks[GetIndex(x, y, z)] = block;
 
 		if (!sendPacket) return;
 
 		auto packet  = new S2C_SetBlock();
-		packet.x     = index.x;
-		packet.y     = index.y;
-		packet.z     = index.z;
+		packet.x     = x;
+		packet.y     = y;
+		packet.z     = z;
 		packet.block = block;
 		
 		foreach (i, client ; clients) {
