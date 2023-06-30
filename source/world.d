@@ -109,14 +109,16 @@ class World {
 
 		auto data = cast(ubyte[]) read(worldPath);
 
-		size = Vec3();
-		size.x          = data[0 .. 2].bigEndianToNative!ushort();
-		size.y          = data[2 .. 4].bigEndianToNative!ushort();
-		size.z          = data[4 .. 6].bigEndianToNative!ushort();
-		spawn = Vec3();
-		spawn.x         = data[6 .. 8].bigEndianToNative!ushort();
-		spawn.y         = data[8 .. 10].bigEndianToNative!ushort();
-		spawn.z         = data[10 .. 12].bigEndianToNative!ushort();
+		ushort x        = data[0 .. 2].bigEndianToNative!ushort();
+		ushort y        = data[2 .. 4].bigEndianToNative!ushort();
+		ushort z        = data[4 .. 6].bigEndianToNative!ushort();
+		size = Vec3!ushort(x, y, z);
+
+		ushort spawnX         = data[6 .. 8].bigEndianToNative!ushort();
+		ushort spawnY         = data[8 .. 10].bigEndianToNative!ushort();
+		ushort spawnZ         = data[10 .. 12].bigEndianToNative!ushort();
+		spawn = Vec3!ushort(spawnX, spawnY, spawnZ);
+
 		permissionBuild = data[12];
 		permissionVisit = data[13];
 
