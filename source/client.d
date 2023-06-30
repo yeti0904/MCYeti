@@ -256,6 +256,7 @@ class Client {
 				}
 				else { // destroyed
 					blockType = Block.Air;
+					SendMessage(format("&cDestroyed ID: %d", world.GetBlock(packet.x, packet.y, packet.z)));
 				}
 				world.SetBlock(packet.x, packet.y, packet.z, blockType);
 
