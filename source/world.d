@@ -183,6 +183,11 @@ class World {
 					else {
 						type = Block.Dirt;
 					}
+					debug {
+						if ((x == 511 || x == 512) && z == 1023 && (y == 256 || y == 257 || y == 258)) {
+							writef("(%d, %d, %d) = %d. SY: %d\n", x, y, z, type, size.y);
+						}
+					}
 
 					SetBlock(x, y, z, type, false);
 				}
