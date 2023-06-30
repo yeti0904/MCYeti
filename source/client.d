@@ -317,6 +317,10 @@ class Client {
 				if (packet.message[0] == '/') {
 					auto parts = packet.message[1 .. $].split!isWhite();
 
+					if (parts.length == 0) {
+						break;
+					}
+
 					if (!server.commands.CommandExists(parts[0])) {
 						SendMessage("&cNo such command");
 						return;
