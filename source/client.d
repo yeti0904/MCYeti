@@ -244,18 +244,21 @@ class Client {
 					resetPacket.x     = packet.x;
 					resetPacket.y     = packet.y;
 					resetPacket.z     = packet.z;
-					resetPacket.block = world.GetBlock(pos);
+					resetPacket.block = world.GetBlock(packet.x, packet.y, packet.z);
 
 					outBuffer ~= resetPacket.CreateData();
 					break;
 				}
 
+				ubyte blockType;
 				if (packet.mode == 0x01) { // created
-					world.SetBlock(pos, packet.blockType);
+					blockType = packet.blockType;
 				}
 				else { // destroyed
-					world.SetBlock(pos, Block.Air);
+					blockType = Block.Air;
 				}
+				world.SetBlock(packet.x, packet.y, packet.z, blockType);
+
 				break;
 			}
 			case C2S_Position.pid: {

@@ -80,7 +80,7 @@ class World {
 
 	this(Vec3!ushort psize, string pname) {
 		size   = psize;
-		blocks = new ubyte[](psize.x * psize.y * psize.z);
+		blocks = CreateBlockArray();
 		name   = pname;
 		
 		spawn  = Vec3!ushort(
@@ -150,12 +150,12 @@ class World {
 	}
 
 	void GenerateFlat() {
-		blocks = new ubyte[](size.x * size.x * size.z);
+		blocks = CreateBlockArray();
 
 		for (short y = 0; y < size.y; ++y) {
 			for (short z = 0; z < size.z; ++z) {
 				for (short x = 0; x < size.x; ++x) {
-					ubyte type = 0;
+					ubyte type;
 					if (y > size.y / 2) {
 						type = Block.Air;
 					}
@@ -165,23 +165,29 @@ class World {
 					else {
 						type = Block.Dirt;
 					}
-                                        
-					blocks[(z * size.x * size.y) + (y * size.y) + x] = type;
+
+					SetBlock(x, y, z, type, false);
 				}
 			}
 		}
 	}
 
-	private size_t GetIndex(Vec3!ushort index) {
-		return (index.z * size.x * size.y) + (index.y * size.y) + index.x;
+	private size_t GetIndex(ushort x, ushort y, ushort z) {
+		return (z * size.x * size.y) + (y * size.y) + x;
 	}
 
-	ubyte GetBlock(Vec3!ushort index) {
-		return blocks[GetIndex(index)];
+	ubyte GetBlock(ushort x, ushort y, ushort z) {
+		return blocks[GetIndex(x, y, z)];
 	}
 
-	void SetBlock(Vec3!ushort index, ubyte block) {
-		blocks[GetIndex(index)] = block;
+	void SetBlock(ushort x, ushort y, ushort z, ubyte block) {
+		SetBlock(x, y, z, block, true);
+	}
+
+	void SetBlock(ushort x, ushort y, ushort z, ubyte block, bool sendPacket) {
+		blocks[GetIndex(x, y, z)] = block;
+
+		if (!sendPacket) return;
 
 		auto packet  = new S2C_SetBlock();
 		packet.x     = index.x;
@@ -211,13 +217,13 @@ class World {
 	}
 
 	ubyte[] Serialise() {	
-		ubyte[] ret = new ubyte[](size.y * size.z * size.x);
+		ubyte[] ret = CreateBlockArray();
 	        
-                size_t i = 0;
+		size_t i = 0;
 		for (short y = 0; y < size.y; ++ y) {
 			for (short z = 0; z < size.z; ++ z) {
 				for (short x = 0; x < size.x; ++ x) {
-					ret[i++] = blocks[(z * size.x * size.y) + (y * size.y) + x];
+					ret[i ++] = GetBlock(x, y, z);
 				}
 			}
 		}
@@ -314,5 +320,9 @@ class World {
 		}
 
 		assert(0);
+	}
+
+	ubyte[] CreateBlockArray() {
+		return new ubyte[](size.y * size.z * size.x);
 	}
 }
