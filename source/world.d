@@ -211,12 +211,13 @@ class World {
 	}
 
 	ubyte[] Serialise() {	
-		ubyte[] ret;
-	
+		ubyte[] ret = new ubyte[](size.y * size.z * size.x);
+	        
+                size_t i = 0;
 		for (short y = 0; y < size.y; ++ y) {
 			for (short z = 0; z < size.z; ++ z) {
 				for (short x = 0; x < size.x; ++ x) {
-					ret ~= GetBlock(Vec3!ushort(x, y, z));
+					ret[i++] = blocks[(z * size.x * size.y) + (y * size.y) + x];
 				}
 			}
 		}
