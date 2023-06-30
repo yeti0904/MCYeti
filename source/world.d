@@ -78,7 +78,7 @@ class World {
 	private ubyte[] blocks;
 	private Vec3!ushort size;
 
-	this(Vec3!ushort psize, string pname) {
+	this(Vec3!ushort psize, string pname, string generator = "flat") {
 		size   = psize;
 		blocks = CreateBlockArray();
 		name   = pname;
@@ -91,6 +91,12 @@ class World {
 
 		for (uint i = 0; i < 256; ++ i) {
 			clients[i] = null;
+		}
+
+		if (generator == "flat") {
+			GenerateFlat();
+		} else {
+			throw new WorldException("Unknown generator specified!");
 		}
 	}
 

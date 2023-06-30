@@ -8,6 +8,7 @@ import mcyeti.commands;
 class Command {
 	string   name;
 	string[] help;
+	ubyte    argumentsRequired;
 	ubyte    permission;
 	abstract void Run(Server server, Client client, string[] args);
 }
@@ -72,7 +73,12 @@ class CommandManager {
 	void RunCommand(string name, Server server, Client client, string[] args) {
 		foreach (ref command ; commands) {
 			if (command.name.LowerString() == name.LowerString()) {
+				if (args.length < command.argumentsRequired) {
+					throw new CommandException(format(
+						"&cExpected at least %d arguments, found %d", command.argumentsRequired, args.length));
+				}
 				command.Run(server, client, args);
+
 				return;
 			}
 		}
