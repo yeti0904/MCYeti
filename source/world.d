@@ -319,6 +319,8 @@ class World {
 	}
 
 	ubyte[] CreateBlockArray() {
+		debug writef("The world size is %d block(s)\n", (size.y * size.z * size.x));
+
 		return new ubyte[](size.y * size.z * size.x);
 	}
 }
