@@ -478,7 +478,7 @@ class NewLevelCommand : Command {
 			world = new World(size, args[0], args[4]);
 		}
 		catch (WorldException e) {
-			SendMessage(format("&c%s", e.msg));
+			client.SendMessage(format("&c%s", e.msg));
 			return;
 		}
 		world.Save();

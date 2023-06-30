@@ -1,5 +1,6 @@
 module mcyeti.commandManager;
 
+import std.format;
 import mcyeti.util;
 import mcyeti.client;
 import mcyeti.server;
