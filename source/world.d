@@ -155,17 +155,18 @@ class World {
 		for (short y = 0; y < size.y; ++y) {
 			for (short z = 0; z < size.z; ++z) {
 				for (short x = 0; x < size.x; ++x) {
-					auto index = Vec3!ushort(x, y, z);
-
+					ubyte type = 0;
 					if (y > size.y / 2) {
-						SetBlock(index, Block.Air);
+						type = Block.Air;
 					}
 					else if (y == size.y / 2) {
-						SetBlock(index, Block.Grass);
+						type = Block.Grass;
 					}
 					else {
-						SetBlock(index, Block.Dirt);
+						type = Block.Dirt;
 					}
+                                        
+					blocks[(z * size.x * size.y) + (y * size.y) + x] = type;
 				}
 			}
 		}
