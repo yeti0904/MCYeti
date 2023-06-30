@@ -169,6 +169,7 @@ class World {
 		blocks = CreateBlockArray();
 		debug writef("Got an array, size: %d\n", blocks.length);
 
+		debug writef("Dimensions: (%d, %d, %d)\n", size.x, size.y, size.z);
 		for (ushort x = 0; x < size.x; ++x) {
 			for (ushort y = 0; y < size.y; ++y) {
 				for (ushort z = 0; z < size.z; ++z) {
