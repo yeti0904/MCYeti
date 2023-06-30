@@ -145,6 +145,7 @@ class World {
 
 		file.rawWrite(metadata);
 		file.rawWrite(blocks);
+		debug writef("Written %d bytes to disk\n", (metadata.length + blocks.length));
 
 		file.flush();
 		file.close();
@@ -213,7 +214,7 @@ class World {
 		return size;
 	}
 
-	ubyte[] Serialise() {	
+	ubyte[] PackXZY() {
 		ubyte[] ret = CreateBlockArray();
 	        
 		size_t i = 0;
@@ -322,6 +323,6 @@ class World {
 	ubyte[] CreateBlockArray() {
 		debug writef("The world size is %d block(s)\n", (size.y * size.z * size.x));
 
-		return new ubyte[](size.y * size.z * size.x);
+		return new ubyte[](size.x * size.y * size.z);
 	}
 }

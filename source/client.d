@@ -91,7 +91,7 @@ class Client {
 	}
 
 	void SendWorld(World world, Server server) {
-		auto serialised = world.Serialise();
+		auto serialised = world.PackXZY();
 
 		outBuffer ~= (new S2C_LevelInit()).CreateData();
 
