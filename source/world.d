@@ -155,16 +155,12 @@ class World {
 
 		file.rawWrite(metadata);
 		file.rawWrite(blocks);
-		debug writef("Written %d bytes to disk\n", (metadata.length + blocks.length));
 
 		file.flush();
 		file.close();
 	}
 
 	void GenerateFlat() {
-		debug writef("Got an array, size: %d\n", blocks.length);
-
-		debug writef("Dimensions: (%d, %d, %d)\n", size.x, size.y, size.z);
 		for (ushort x = 0; x < size.x; ++x) {
 			for (ushort y = 0; y < size.y; ++y) {
 				for (ushort z = 0; z < size.z; ++z) {
@@ -177,11 +173,6 @@ class World {
 					}
 					else {
 						type = Block.Dirt;
-					}
-					debug {
-						if ((x == 511 || x == 512) && z == 1023 && (y == 256 || y == 257 || y == 258)) {
-							writef("(%d, %d, %d) = %d. SY: %d\n", x, y, z, type, size.y);
-						}
 					}
 
 					SetBlock(x, y, z, type, false);
@@ -231,19 +222,6 @@ class World {
 	}
 
 	ubyte[] PackXZY() {
-		ubyte[] ret;
-
-		for (short y = 0; y < size.y; ++ y) {
-			for (short z = 0; z < size.z; ++ z) {
-				for (short x = 0; x < size.x; ++ x) {
-					ret ~= GetBlock(x, y, z);
-				}
-			}
-		}
-
-		return ret;
-
-		/*
 		ubyte[] ret = CreateBlockArray();
 	        
 		size_t i = 0;
@@ -256,8 +234,6 @@ class World {
 		}
 
 		return ret;
-
-		 */
 	}
 
 	void NewClient(Client client, Server server) {
