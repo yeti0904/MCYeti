@@ -73,14 +73,15 @@ class World {
 	Client[256] clients;
 	ubyte       permissionBuild;
 	ubyte       permissionVisit;
+	bool        changed = false;
 
 	private string name;
 	private ubyte[] blocks;
 	private Vec3!ushort size;
 
-	this(Vec3!ushort psize, string pname) {
+	this(Vec3!ushort psize, string pname, string generator = "flat") {
 		size   = psize;
-		blocks = new ubyte[](psize.x * psize.y * psize.z);
+		blocks = CreateBlockArray();
 		name   = pname;
 		
 		spawn  = Vec3!ushort(
@@ -91,6 +92,12 @@ class World {
 
 		for (uint i = 0; i < 256; ++ i) {
 			clients[i] = null;
+		}
+
+		if (generator == "flat") {
+			GenerateFlat();
+		} else {
+			throw new WorldException("Unknown generator specified!");
 		}
 	}
 
@@ -119,9 +126,15 @@ class World {
 		permissionVisit = data[13];
 
 		blocks = data[512 .. $];
+
+		if (size.x * size.y * size.z != blocks.length) {
+			throw new WorldException("Block array size does not match volume of map");
+		}
 	}
 
 	void Save() {
+		if (!changed) return;
+
 		string worldPath = dirName(thisExePath()) ~ "/worlds/" ~ name ~ ".ylv";
 
 		auto file = File(worldPath, "wb");
@@ -147,45 +160,49 @@ class World {
 
 		file.flush();
 		file.close();
+
+		changed = false;
 	}
 
 	void GenerateFlat() {
-		blocks = new ubyte[](size.x * size.x * size.z);
-
-		for (short y = 0; y < size.y; ++y) {
-			for (short z = 0; z < size.z; ++z) {
-				for (short x = 0; x < size.x; ++x) {
-					auto index = Vec3!ushort(x, y, z);
-
+		for (ushort x = 0; x < size.x; ++x) {
+			for (ushort y = 0; y < size.y; ++y) {
+				for (ushort z = 0; z < size.z; ++z) {
+					ubyte type;
 					if (y > size.y / 2) {
-						SetBlock(index, Block.Air);
+						type = Block.Air;
 					}
 					else if (y == size.y / 2) {
-						SetBlock(index, Block.Grass);
+						type = Block.Grass;
 					}
 					else {
-						SetBlock(index, Block.Dirt);
+						type = Block.Dirt;
 					}
+
+					SetBlock(x, y, z, type, false);
 				}
 			}
 		}
 	}
 
-	private size_t GetIndex(Vec3!ushort index) {
-		return (index.z * size.x * size.y) + (index.y * size.y) + index.x;
+	private size_t GetIndex(ushort x, ushort y, ushort z) {
+		return (z * size.x * size.y) + (y * size.y) + x;
 	}
 
-	ubyte GetBlock(Vec3!ushort index) {
-		return blocks[GetIndex(index)];
+	ubyte GetBlock(ushort x, ushort y, ushort z) {
+		return blocks[GetIndex(x, y, z)];
 	}
 
-	void SetBlock(Vec3!ushort index, ubyte block) {
-		blocks[GetIndex(index)] = block;
+	void SetBlock(ushort x, ushort y, ushort z, ubyte block, bool sendPacket = true) {
+		blocks[GetIndex(x, y, z)] = block;
+		changed = true;
+
+		if (!sendPacket) return;
 
 		auto packet  = new S2C_SetBlock();
-		packet.x     = index.x;
-		packet.y     = index.y;
-		packet.z     = index.z;
+		packet.x     = x;
+		packet.y     = y;
+		packet.z     = z;
 		packet.block = block;
 		
 		foreach (i, client ; clients) {
@@ -209,13 +226,14 @@ class World {
 		return size;
 	}
 
-	ubyte[] Serialise() {	
-		ubyte[] ret;
-	
-		for (short y = 0; y < size.y; ++ y) {
-			for (short z = 0; z < size.z; ++ z) {
-				for (short x = 0; x < size.x; ++ x) {
-					ret ~= GetBlock(Vec3!ushort(x, y, z));
+	ubyte[] PackXZY() {
+		ubyte[] ret = CreateBlockArray();
+	        
+		size_t i = 0;
+		for (ushort y = 0; y < size.y; ++ y) {
+			for (ushort z = 0; z < size.z; ++ z) {
+				for (ushort x = 0; x < size.x; ++ x) {
+					ret[i ++] = GetBlock(x, y, z);
 				}
 			}
 		}
@@ -312,5 +330,9 @@ class World {
 		}
 
 		assert(0);
+	}
+
+	ubyte[] CreateBlockArray() {
+		return new ubyte[](size.x * size.y * size.z);
 	}
 }

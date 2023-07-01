@@ -24,6 +24,7 @@ class HelpCommand : Command {
 			"&a/help [command]",
 			"&eShows info about how to use that command"
 		];
+		argumentsRequired = 0;
 		permission = 0;
 	}
 
@@ -64,6 +65,7 @@ class ShutdownCommand : Command {
 			"&a/shutdown",
 			"&eSaves all levels and then shuts down"
 		];
+		argumentsRequired = 0;
 		permission = 0xF0;
 	}
 
@@ -86,6 +88,7 @@ class InfoCommand : Command {
 			"&eShows info for the given player",
 			"&eIf player not given, shows your info"
 		];
+		argumentsRequired = 0;
 		permission = 0x00;
 	}
 
@@ -134,10 +137,12 @@ class BanCommand : Command {
 			"&a/ban [username]",
 			"&eBans the given player"
 		];
+		argumentsRequired = 1;
 		permission = 0xD0;
 	}
 
 	override void Run(Server server, Client client, string[] args) {
+		// todo no longer needed?
 		if (args.length == 0) {
 			client.SendMessage("&cUsername parameter required");
 			return;
@@ -174,13 +179,15 @@ class UnbanCommand : Command {
 	this() {
 		name = "unban";
 		help = [
-			"&a/unban [username]",
+			"&a/unban [username]", // todo for an obligatory argument usually it's <username>?
 			"&eUnbans the given player"
 		];
+		argumentsRequired = 1;
 		permission = 0xD0;
 	}
 
 	override void Run(Server server, Client client, string[] args) {
+		// todo no longer needed?
 		if (args.length == 0) {
 			client.SendMessage("&cUsername parameter required");
 			return;
@@ -215,10 +222,12 @@ class IPBanCommand : Command {
 			"&a/banip player [player]",
 			"&eBans the IP of the given player"
 		];
+		argumentsRequired = 2;
 		permission = 0xD0;
 	}
 
 	override void Run(Server server, Client client, string[] args) {
+		// todo no longer needed?
 		if (args.length != 2) {
 			client.SendMessage("&c2 parameters required");
 			return;
@@ -258,6 +267,7 @@ class IPUnbanCommand : Command {
 			"&a/ipunban [ip]",
 			"&eUnbans the given IP"
 		];
+		argumentsRequired = 1;
 		permission = 0xD0;
 	}
 
@@ -265,6 +275,7 @@ class IPUnbanCommand : Command {
 		string   path = dirName(thisExePath()) ~ "/banned_ips.txt";
 		string[] ips  = readText(path).split('\n');
 
+		// todo no longer needed?
 		if (args.length != 1) {
 			client.SendMessage("&c1 parameter required (IP)");
 			return;
@@ -291,6 +302,7 @@ class ServerInfoCommand : Command {
 			"&a/serverinfo",
 			"&eShows info about the server"
 		];
+		argumentsRequired = 0;
 		permission = 0x00;
 	}
 
@@ -308,6 +320,7 @@ class RanksCommand : Command {
 			"&a/ranks",
 			"&eShows all ranks"
 		];
+		argumentsRequired = 0;
 		permission = 0x00;
 	}
 
@@ -327,10 +340,12 @@ class PerbuildCommand : Command {
 			"&a/perbuild [rank]",
 			"&eSets the minimum rank needed to build on a map"
 		];
+		argumentsRequired = 1;
 		permission = 0xE0;
 	}
 
 	override void Run(Server server, Client client, string[] args) {
+		// todo no longer needed?
 		if (args.length != 1) {
 			client.SendMessage("&c1 parameter required");
 			return;
@@ -359,10 +374,12 @@ class PervisitCommand : Command {
 			"&a/pervisit [rank]",
 			"&eSets the minimum rank needed to visit a map"
 		];
+		argumentsRequired = 1;
 		permission = 0xE0;
 	}
 
 	override void Run(Server server, Client client, string[] args) {
+		// todo no longer needed?
 		if (args.length != 1) {
 			client.SendMessage("&c1 parameter required");
 			return;
@@ -391,10 +408,12 @@ class GotoCommand : Command {
 			"&a/goto [level name]",
 			"&eSends you to the given level"
 		];
+		argumentsRequired = 1;
 		permission = 0x00;
 	}
 
 	override void Run(Server server, Client client, string[] args) {
+		// todo no longer needed?
 		if (args.length != 1) {
 			client.SendMessage("&c1 parameter required");
 			return;
@@ -433,6 +452,7 @@ class NewLevelCommand : Command {
 			"&eCreates a new level",
 			"&eTypes: flat"
 		];
+		argumentsRequired = 5;
 		permission = 0xD0;
 	}
 
@@ -454,19 +474,13 @@ class NewLevelCommand : Command {
 			parse!ushort(args[3])
 		);
 
-		world = new World(size, args[0]);
-
-		switch (args[4]) {
-			case "flat": {
-				world.GenerateFlat();
-				break;
-			}
-			default: {
-				client.SendMessage(format("&cUnknown world type %s", args[4]));
-				return;
-			}
+		try {
+			world = new World(size, args[0], args[4]);
 		}
-
+		catch (WorldException e) {
+			client.SendMessage(format("&c%s", e.msg));
+			return;
+		}
 		world.Save();
 
 		server.worlds ~= world;
@@ -482,6 +496,7 @@ class LevelsCommand : Command {
 			"&a/levels",
 			"&eShows all levels"
 		];
+		argumentsRequired = 0;
 		permission = 0x00;
 	}
 
@@ -511,6 +526,7 @@ class PlayersCommand : Command {
 			"&a/players",
 			"&eShows all online players"
 		];
+		argumentsRequired = 0;
 		permission = 0x00;
 	}
 
