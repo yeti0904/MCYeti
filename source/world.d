@@ -236,11 +236,11 @@ class World {
 		for (short y = 0; y < size.y; ++ y) {
 			for (short z = 0; z < size.z; ++ z) {
 				for (short x = 0; x < size.x; ++ x) {
-					ret ~= GetBlock(Vec3!ushort(x, y, z));
+					ret ~= GetBlock(x, y, z);
 				}
 			}
 		}
-		
+
 		return ret;
 
 		/*
