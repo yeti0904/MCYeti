@@ -133,6 +133,8 @@ class World {
 	}
 
 	void Save() {
+		if (!changed) return;
+
 		string worldPath = dirName(thisExePath()) ~ "/worlds/" ~ name ~ ".ylv";
 
 		auto file = File(worldPath, "wb");
@@ -158,6 +160,8 @@ class World {
 
 		file.flush();
 		file.close();
+
+		changed = false;
 	}
 
 	void GenerateFlat() {
@@ -191,6 +195,7 @@ class World {
 
 	void SetBlock(ushort x, ushort y, ushort z, ubyte block, bool sendPacket = true) {
 		blocks[GetIndex(x, y, z)] = block;
+		changed = true;
 
 		if (!sendPacket) return;
 
