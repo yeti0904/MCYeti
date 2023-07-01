@@ -73,7 +73,7 @@ class World {
 	Client[256] clients;
 	ubyte       permissionBuild;
 	ubyte       permissionVisit;
-	bool        changed;
+	bool        changed = false;
 
 	private string name;
 	private ubyte[] blocks;
