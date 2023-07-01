@@ -166,7 +166,6 @@ class World {
 	}
 
 	void GenerateFlat() {
-		blocks = CreateBlockArray();
 		debug writef("Got an array, size: %d\n", blocks.length);
 
 		debug writef("Dimensions: (%d, %d, %d)\n", size.x, size.y, size.z);
