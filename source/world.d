@@ -73,6 +73,7 @@ class World {
 	Client[256] clients;
 	ubyte       permissionBuild;
 	ubyte       permissionVisit;
+	bool        changed;
 
 	private string name;
 	private ubyte[] blocks;
@@ -115,21 +116,16 @@ class World {
 
 		auto data = cast(ubyte[]) read(worldPath);
 
-		ushort x        = data[0 .. 2].bigEndianToNative!ushort();
-		ushort y        = data[2 .. 4].bigEndianToNative!ushort();
-		ushort z        = data[4 .. 6].bigEndianToNative!ushort();
-		size = Vec3!ushort(x, y, z);
-
-		ushort spawnX         = data[6 .. 8].bigEndianToNative!ushort();
-		ushort spawnY         = data[8 .. 10].bigEndianToNative!ushort();
-		ushort spawnZ         = data[10 .. 12].bigEndianToNative!ushort();
-		spawn = Vec3!ushort(spawnX, spawnY, spawnZ);
-
+		size.x          = data[0 .. 2].bigEndianToNative!ushort();
+		size.y          = data[2 .. 4].bigEndianToNative!ushort();
+		size.z          = data[4 .. 6].bigEndianToNative!ushort();
+		spawn.x         = data[6 .. 8].bigEndianToNative!ushort();
+		spawn.y         = data[8 .. 10].bigEndianToNative!ushort();
+		spawn.z         = data[10 .. 12].bigEndianToNative!ushort();
 		permissionBuild = data[12];
 		permissionVisit = data[13];
 
 		blocks = data[512 .. $];
-		debug writef("Read blocks, size: %d\n", blocks.length);
 
 		if (size.x * size.y * size.z != blocks.length) {
 			throw new WorldException("Block array size does not match volume of map");
@@ -235,18 +231,33 @@ class World {
 	}
 
 	ubyte[] PackXZY() {
-		ubyte[] ret = CreateBlockArray();
-	        
-		size_t i = 0;
+		ubyte[] ret;
+
 		for (short y = 0; y < size.y; ++ y) {
 			for (short z = 0; z < size.z; ++ z) {
 				for (short x = 0; x < size.x; ++ x) {
+					ret ~= GetBlock(Vec3!ushort(x, y, z));
+				}
+			}
+		}
+		
+		return ret;
+
+		/*
+		ubyte[] ret = CreateBlockArray();
+	        
+		size_t i = 0;
+		for (ushort y = 0; y < size.y; ++ y) {
+			for (ushort z = 0; z < size.z; ++ z) {
+				for (ushort x = 0; x < size.x; ++ x) {
 					ret[i ++] = GetBlock(x, y, z);
 				}
 			}
 		}
 
 		return ret;
+
+		 */
 	}
 
 	void NewClient(Client client, Server server) {
@@ -341,10 +352,6 @@ class World {
 	}
 
 	ubyte[] CreateBlockArray() {
-		debug writef("The world size is %d block(s)\n", (size.y * size.z * size.x));
-		ubyte[] created = new ubyte[](size.x * size.y * size.z);
-		debug writef("created.length is %d\n", created.length);
-
-		return created;
+		return new ubyte[](size.x * size.y * size.z);
 	}
 }

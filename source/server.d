@@ -241,9 +241,17 @@ class Server {
 		if (!WorldExists(name)) {
 			throw new ServerException("No such world");
 		}
-	
-		worlds ~= new World(name);
-		worlds[$ - 1].Save();
+
+		try {
+			worlds ~= new World(name);
+			worlds[$ - 1].Save();
+		}
+		catch (WorldException e) {
+			throw new ServerException(e.msg);
+		}
+		catch (Exception e) {
+			throw new ServerException("An unknown error occurred while loading the world");
+		}
 	}
 
 	World GetWorld(string name) {
