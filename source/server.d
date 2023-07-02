@@ -12,7 +12,7 @@ import std.datetime;
 import std.net.curl;
 import std.algorithm;
 import std.datetime.stopwatch;
-import dauth.random;
+import csprng.system;
 import mcyeti.util;
 import mcyeti.types;
 import mcyeti.world;
@@ -105,8 +105,9 @@ class Server {
 		commands.LoadAliases(aliases);
 
 		// generate salt
-		salt = randomSalt(16).BytesToString();
-
+		auto random = new CSPRNG();
+		salt = (cast(ubyte[]) random.getBytes(16)).BytesToString();
+		
 		serverSet = new SocketSet();
 		clientSet = new SocketSet();
 
@@ -269,6 +270,17 @@ class Server {
 		catch (Exception e) {
 			throw new ServerException("An unknown error occurred while loading the world");
 		}
+	}
+
+	void UnloadWorld(string name) {
+		foreach (i, ref world ; worlds) {
+			if (world.GetName() == name) {
+				worlds = worlds.remove(i);
+				return;
+			}
+		}
+
+		throw new ServerException("No such world");
 	}
 
 	World GetWorld(string name) {
