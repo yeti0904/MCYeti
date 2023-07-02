@@ -437,6 +437,10 @@ class GotoCommand : Command {
 			try {
 				server.LoadWorld(args[0]);
 			}
+			catch (WorldException e) {
+				client.SendMessage(format("&c%s", e.msg));
+				return;
+			}
 			catch (ServerException e) {
 				client.SendMessage(format("&c%s", e.msg));
 				return;
