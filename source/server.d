@@ -52,6 +52,8 @@ class Server {
 	JSONValue      ranks;
 
 	this() {
+		commands = new CommandManager();
+
 		running             = true;
 		config.ip           = "0.0.0.0";
 		config.port         = 25565;
@@ -85,6 +87,23 @@ class Server {
 			std.file.write(ranksPath, ranks.toPrettyString());
 		}
 
+		string    aliasesPath = dirName(thisExePath()) ~ "/properties/aliases.json";
+		JSONValue aliases = parseJSON("{}");
+
+		if (exists(aliasesPath)) {
+			aliases = parseJSON(readText(aliasesPath));
+		}
+		else {
+			aliases["g"]      = "goto";
+			aliases["sinfo"]  = "serverinfo";
+			aliases["i"]      = "info";
+			aliases["newlvl"] = "newlevel";
+		
+			std.file.write(aliasesPath, aliases.toPrettyString());
+		}
+
+		commands.LoadAliases(aliases);
+
 		// generate salt
 		salt = randomSalt(16).BytesToString();
 
@@ -100,8 +119,6 @@ class Server {
 			worlds[$ - 1].GenerateFlat();
 			worlds[$ - 1].Save();
 		}
-
-		commands = new CommandManager();
 	}
 
 	~this() {

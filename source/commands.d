@@ -31,9 +31,11 @@ class HelpCommand : Command {
 	override void Run(Server server, Client client, string[] args) {
 		if (args.length == 0) {
 			client.SendMessage("&eAll commands:");
+
 			foreach (ref command ; server.commands.commands) {
 				client.SendMessage(format("  &a%s", command.name));
 			}
+
 			client.SendMessage(
 				format(
 					"&e%d commands available", server.commands.commands.length
@@ -54,6 +56,18 @@ class HelpCommand : Command {
 			foreach (ref line ; command.help) {
 				client.SendMessage(line);
 			}
+
+			string aliases;
+
+			foreach (key, value ; server.commands.aliases) {
+				if (value == command.name) {
+					aliases ~= format("%s, ", key);
+				}
+			}
+
+			aliases = aliases[0 .. $ - 2];
+
+			client.SendMessage(format("&eAliases: &f%s", aliases));
 		}
 	}
 }
@@ -551,6 +565,28 @@ class PlayersCommand : Command {
 
 		client.SendMessage(
 			format("&a%d&e players online", server.clients.length)
+		);
+	}
+}
+
+class AddAliasCommand : Command {
+	this() {
+		name = "addalias";
+		help = [
+			"&a/addalias [alias name] [command]",
+			"&eAdds a new alias"
+		];
+		argumentsRequired = 2;
+		permission        = 0xE0;
+	}
+
+	override void Run(Server server, Client client, string[] args) {
+		server.commands.aliases[args[0]] = args[1];
+
+		string aliasesPath = dirName(thisExePath()) ~ "/properties/aliases.json";
+		std.file.write(
+			aliasesPath,
+			server.commands.SerialiseAliases().toPrettyString()
 		);
 	}
 }

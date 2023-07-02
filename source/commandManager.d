@@ -1,5 +1,6 @@
 module mcyeti.commandManager;
 
+import std.json;
 import std.format;
 import mcyeti.util;
 import mcyeti.client;
@@ -21,7 +22,8 @@ class CommandException : Exception {
 }
 
 class CommandManager {
-	Command[] commands;
+	Command[]      commands;
+	string[string] aliases;
 
 	this() {
 		LoadCommand(new HelpCommand());
@@ -45,7 +47,31 @@ class CommandManager {
 		commands ~= command;
 	}
 
+	bool AliasExists(string name) {
+		return name.LowerString() in aliases? true : false;
+	}
+
+	void LoadAliases(JSONValue json) {
+		foreach (key, value ; json.object) {
+			aliases[key] = value.str;
+		}
+	}
+
+	JSONValue SerialiseAliases() {
+		JSONValue ret = parseJSON("{}");
+
+		foreach (key, value ; aliases) {
+			ret[key] = JSONValue(value);
+		}
+
+		return ret;
+	}
+
 	Command GetCommand(string name) {
+		if (AliasExists(name)) {
+			name = aliases[name.LowerString()];
+		}
+	
 		foreach (ref command ; commands) {
 			if (command.name.LowerString() == name.LowerString()) {
 				return command;
@@ -56,6 +82,10 @@ class CommandManager {
 	}
 
 	bool CommandExists(string name) {
+		if (AliasExists(name)) {
+			name = aliases[name.LowerString()];
+		}
+	
 		foreach (ref command ; commands) {
 			if (command.name.LowerString() == name.LowerString()) {
 				return true;
@@ -66,12 +96,20 @@ class CommandManager {
 	}
 	
 	bool CanRunCommand(string name, Client client) {
+		if (AliasExists(name)) {
+			name = aliases[name.LowerString()];
+		}
+	
 		auto command = GetCommand(name);
 
 		return client.info["rank"].integer >= command.permission;
 	}
 
 	void RunCommand(string name, Server server, Client client, string[] args) {
+		if (AliasExists(name)) {
+			name = aliases[name.LowerString()];
+		}
+	
 		foreach (ref command ; commands) {
 			if (command.name.LowerString() == name.LowerString()) {
 				if (args.length < command.argumentsRequired) {
