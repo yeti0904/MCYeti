@@ -313,6 +313,18 @@ class Client {
 				packet.FromData(inBuffer);
 				inBuffer = inBuffer[packet.GetSize() .. $];
 
+				string colourCodes = "0123456789abcdef";
+				char[] msg         = cast(char[]) packet.message;
+				for (size_t i = 0; i < msg.length - 1; ++ i) {
+					if (
+						(msg[i] == '%') &&
+						colourCodes.canFind(msg[i + 1])
+					) {
+						msg[i] = '&';
+					}
+				}
+				packet.message = cast(string) msg;
+
 				if (!authenticated) {
 					break;
 				}
