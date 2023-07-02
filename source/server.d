@@ -146,11 +146,11 @@ class Server {
 			serverURL = cast(string) get(url);
 		}
 		catch (CurlException e) {
-			writefln("Error in heartbeat: %s", e.msg);
+			Log("Error in heartbeat: %s", e.msg);
 		}
 
 		if (serverURL != oldServerURL) {
-			writefln("Server URL: %s", serverURL);
+			Log("Server URL: %s", serverURL);
 		}
 
 		oldServerURL = serverURL;
@@ -172,7 +172,7 @@ class Server {
 
 		uptime.start();
 
-		writefln("Listening at %s:%d", config.ip, config.port);
+		Log("Listening at %s:%d", config.ip, config.port);
 	}
 
 	JSONValue ConfigAsJSON() {
@@ -308,7 +308,7 @@ class Server {
 			}
 		}
 
-		writeln(message.CleanString());
+		Log(message.CleanString());
 	}
 
 	void Kick(string username, string message) {
@@ -481,7 +481,7 @@ class Server {
 				clients ~= newClient;
 				clientSet.add(newClient.socket);
 
-				writefln("%s connected", newClient.ip);
+				Log("%s connected", newClient.ip);
 			}
 		}
 

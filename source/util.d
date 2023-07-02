@@ -1,6 +1,7 @@
 module mcyeti.util;
 
 import std.ascii;
+import std.stdio;
 import std.format;
 
 string LowerString(string str) {
@@ -23,4 +24,20 @@ string BytesToString(ubyte[] bytes) {
 	}
 
 	return ret;
+}
+
+void Log(Char, A...)(in Char[] fmt, A args) {
+	writefln(fmt, args);
+
+	version (Windows) {
+		stdout.flush();
+	}
+}
+
+void Log(string str) {
+	writeln(str);
+
+	version (Windows) {
+		stdout.flush();
+	}
 }
