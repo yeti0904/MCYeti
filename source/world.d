@@ -4,6 +4,7 @@ import std.file;
 import std.path;
 import std.stdio;
 import std.bitmanip;
+import mcyeti.util;
 import mcyeti.types;
 import mcyeti.client;
 import mcyeti.server;
@@ -73,11 +74,12 @@ class World {
 	Client[256] clients;
 	ubyte       permissionBuild;
 	ubyte       permissionVisit;
-	bool        changed = false;
 
 	private string name;
 	private ubyte[] blocks;
 	private Vec3!ushort size;
+	private ushort formatVersion;
+	private bool changed = false;
 
 	this(Vec3!ushort psize, string pname, string generator = "flat") {
 		size   = psize;
@@ -93,6 +95,8 @@ class World {
 		for (uint i = 0; i < 256; ++ i) {
 			clients[i] = null;
 		}
+
+		formatVersion = 1;
 
 		if (generator == "flat") {
 			GenerateFlat();
@@ -124,6 +128,10 @@ class World {
 		spawn.z         = data[10 .. 12].bigEndianToNative!ushort();
 		permissionBuild = data[12];
 		permissionVisit = data[13];
+		formatVersion   = data[14 .. 16].bigEndianToNative!ushort();
+		if (formatVersion != 0 && formatVersion != 1) {
+			throw new WorldException("Unsupported formatVersion");
+		}
 
 		blocks = data[512 .. $];
 
@@ -146,10 +154,11 @@ class World {
 			spawn.x.nativeToBigEndian() ~
 			spawn.y.nativeToBigEndian() ~
 			spawn.z.nativeToBigEndian() ~
-		[
-			permissionBuild,
-			permissionVisit
-		];
+			[
+				permissionBuild,
+				permissionVisit
+			] ~
+			formatVersion.nativeToBigEndian();
 
 		while (metadata.length < 512) {
 			metadata ~= 0;
@@ -186,7 +195,14 @@ class World {
 	}
 
 	private size_t GetIndex(ushort x, ushort y, ushort z) {
-		return (z * size.x * size.y) + (y * size.y) + x;
+		if (formatVersion == 1) {
+			return (y * size.z + z) * size.x + x;
+		} else {
+			// this is deprecated and will produce a quite weird
+			// generation sometimes. leaving this only for legacy levels support
+
+			return (z * size.x * size.y) + (y * size.y) + x;
+		}
 	}
 
 	ubyte GetBlock(ushort x, ushort y, ushort z) {
