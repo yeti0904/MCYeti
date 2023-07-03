@@ -1,9 +1,13 @@
 module mcyeti.world;
 
 import std.file;
+import std.math;
 import std.path;
 import std.stdio;
+import std.random;
 import std.bitmanip;
+import std.algorithm;
+import fast_noise;
 import mcyeti.util;
 import mcyeti.types;
 import mcyeti.client;
@@ -98,10 +102,18 @@ class World {
 
 		formatVersion = 1;
 
-		if (generator == "flat") {
-			GenerateFlat();
-		} else {
-			throw new WorldException("Unknown generator specified!");
+		switch (generator) {
+			case "flat": {
+				GenerateFlat();
+				break;
+			}
+			case "normal": {
+				GenerateNormal();
+				break;
+			}
+			default: {
+				throw new WorldException("Unknown generator specified!");
+			}
 		}
 	}
 
@@ -129,6 +141,7 @@ class World {
 		permissionBuild = data[12];
 		permissionVisit = data[13];
 		formatVersion   = data[14 .. 16].bigEndianToNative!ushort();
+		
 		if (formatVersion != 0 && formatVersion != 1) {
 			throw new WorldException("Unsupported formatVersion");
 		}
@@ -174,9 +187,9 @@ class World {
 	}
 
 	void GenerateFlat() {
-		for (ushort x = 0; x < size.x; ++x) {
-			for (ushort y = 0; y < size.y; ++y) {
-				for (ushort z = 0; z < size.z; ++z) {
+		for (ushort x = 0; x < size.x; ++ x) {
+			for (ushort y = 0; y < size.y; ++ y) {
+				for (ushort z = 0; z < size.z; ++ z) {
 					ubyte type;
 					if (y > size.y / 2) {
 						type = Block.Air;
@@ -194,10 +207,36 @@ class World {
 		}
 	}
 
+	void GenerateNormal() {
+		FNLState noise = fnlCreateState(uniform(0, 0xFFFFFFFF));
+		noise.noise_type = FNLNoiseType.FNL_NOISE_PERLIN;
+	
+		for (ushort x = 0; x < size.x; ++ x) {
+			for (ushort z = 0; z < size.z; ++ z) {
+				double value = fnlGetNoise3D(
+					&noise,
+					(cast(double) x), 0.0, (cast(double) z)
+				);
+				value += 1.0;
+
+				ushort height = cast(ushort) (value * (cast(double) size.y));
+				height /= 2;
+				height  = cast(ushort) min(height, size.y - 1);
+
+				foreach (i ; 0 .. height) {
+					SetBlock(x, cast(ushort) i, z, Block.Dirt); // here
+				}
+				
+				SetBlock(x, height, z, Block.Grass, false);
+			}
+		}
+	}
+
 	private size_t GetIndex(ushort x, ushort y, ushort z) {
 		if (formatVersion == 1) {
 			return (y * size.z + z) * size.x + x;
-		} else {
+		}
+		else {
 			// this is deprecated and will produce a quite weird
 			// generation sometimes. leaving this only for legacy levels support
 
@@ -223,6 +262,9 @@ class World {
 		
 		foreach (i, client ; clients) {
 			if (client is null) {
+				continue;
+			}
+			if (client.world !is this) {
 				continue;
 			}
 

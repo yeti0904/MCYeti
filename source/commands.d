@@ -468,7 +468,7 @@ class NewLevelCommand : Command {
 		help = [
 			"&a/newlevel [name] [x size] [y size] [z size] [type]",
 			"&eCreates a new level",
-			"&eTypes: flat"
+			"&eTypes: flat, normal"
 		];
 		argumentsRequired = 5;
 		permission = 0xD0;
