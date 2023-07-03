@@ -175,10 +175,6 @@ class Client {
 
 				authenticated = true;
 
-				server.SendGlobalMessage(
-					format("&a+&f %s has connected", username)
-				);
-
 				// set up info
 				info = parseJSON("{}");
 				info["rank"]   = 0x00;
@@ -200,6 +196,10 @@ class Client {
 					server.Kick(this, "You're banned!");
 					return;
 				}
+
+				server.SendGlobalMessage(
+					format("&a+&f %s has connected", username)
+				);
 
 				if (server.config.owner == username) {
 					info["rank"] = 0xF0;

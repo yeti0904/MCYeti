@@ -351,7 +351,7 @@ class Server {
 			}
 		}
 		
-		if (client.authenticated) {
+		if (client.authenticated && !client.info["banned"].boolean) {
 			string msg = message == ""?
 				format("&c-&f %s disconnected (%s)", client.username, message) :
 				format("&c-&f %s disconnected", client.username);
