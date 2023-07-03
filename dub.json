@@ -6,6 +6,7 @@
 	"dependencies": {
 		"csprng": "~>1.1.2"
 	},
+	"buildOptions": ["optimize", "inline", "lowmem"],
 	"description": "A Minecraft Classic server software",
 	"license": "GPL-3.0-or-later",
 	"name": "mcyeti"

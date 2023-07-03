@@ -167,6 +167,11 @@ class Server {
 				SocketOptionLevel.SOCKET, cast(SocketOption) SO_REUSEPORT, 1
 			);
 		}
+		version (Windows) {
+			socket.setOption(
+				SocketOptionLevel.SOCKET, cast(SocketOption) SO_REUSEADDR, 1
+			);
+		}
 
 		socket.bind(new InternetAddress(config.ip, config.port));
 		socket.listen(50);
@@ -470,6 +475,11 @@ class Server {
 		}
 		catch (SocketAcceptException) {
 			success = false;
+		}
+		version (Windows) {
+			if (!newClientSocket.isAlive()) {
+				success = false;
+			}
 		}
 
 		if (success) {
