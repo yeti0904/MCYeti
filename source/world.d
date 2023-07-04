@@ -157,34 +157,36 @@ class World {
 	void Save() {
 		if (!changed) return;
 
-		string worldPath = dirName(thisExePath()) ~ "/worlds/" ~ name ~ ".ylv";
+		new Thread({
+			string worldPath = dirName(thisExePath()) ~ "/worlds/" ~ name ~ ".ylv";
 
-		auto file = File(worldPath, "wb");
+			auto file = File(worldPath, "wb");
 
-		ubyte[] metadata =
+			ubyte[] metadata =
 			size.x.nativeToBigEndian() ~
 			size.y.nativeToBigEndian() ~
 			size.z.nativeToBigEndian() ~
 			spawn.x.nativeToBigEndian() ~
 			spawn.y.nativeToBigEndian() ~
 			spawn.z.nativeToBigEndian() ~
-			[
+				[
 				permissionBuild,
 				permissionVisit
 			] ~
 			formatVersion.nativeToBigEndian();
 
-		while (metadata.length < 512) {
-			metadata ~= 0;
-		}
+			while (metadata.length < 512) {
+				metadata ~= 0;
+			}
 
-		file.rawWrite(metadata);
-		file.rawWrite(blocks);
+			file.rawWrite(metadata);
+			file.rawWrite(blocks);
 
-		file.flush();
-		file.close();
+			file.flush();
+			file.close();
 
-		changed = false;
+			changed = false;
+		}).start();
 	}
 
 	void GenerateFlat() {
