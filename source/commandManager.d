@@ -5,13 +5,26 @@ import std.format;
 import mcyeti.util;
 import mcyeti.client;
 import mcyeti.server;
-import mcyeti.commands;
+import mcyeti.commands.info;
+import mcyeti.commands.moderation;
+import mcyeti.commands.other;
+import mcyeti.commands.world;
+
+enum CommandCategory {
+	Info,
+	Moderation,
+	Other,
+	World,
+
+	End
+}
 
 class Command {
-	string   name;
-	string[] help;
-	ubyte    argumentsRequired;
-	ubyte    permission;
+	string          name;
+	string[]        help;
+	ubyte           argumentsRequired;
+	ubyte           permission;
+	CommandCategory category;
 	abstract void Run(Server server, Client client, string[] args);
 }
 
@@ -41,6 +54,26 @@ class CommandManager {
 		LoadCommand(new NewLevelCommand());
 		LoadCommand(new LevelsCommand());
 		LoadCommand(new PlayersCommand());
+	}
+
+	CommandCategory ToCategory(string str) {
+		switch (str.LowerString()) {
+			case "info": {
+				return CommandCategory.Info;
+			}
+			case "moderation": {
+				return CommandCategory.Moderation;
+			}
+			case "other": {
+				return CommandCategory.Other;
+			}
+			case "world": {
+				return CommandCategory.World;
+			}
+			default: {
+				throw new CommandException("No such category");
+			}
+		}
 	}
 
 	void LoadCommand(Command command) {

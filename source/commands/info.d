@@ -1,0 +1,269 @@
+module mcyeti.commands.info;
+
+import std.conv;
+import std.file;
+import std.json;
+import std.path;
+import std.array;
+import std.format;
+import std.string;
+import std.algorithm;
+import core.stdc.stdlib;
+import mcyeti.types;
+import mcyeti.world;
+import mcyeti.client;
+import mcyeti.server;
+import mcyeti.commandManager;
+
+class HelpCommand : Command {
+	this() {
+		name = "help";
+		help = [
+			"&a/help",
+			"&eShows all command categories",
+			"&a/help category [category]",
+			"&eShows all commands from that category",
+			"&a/help [command]",
+			"&eShows info about how to use that command"
+		];
+		argumentsRequired = 0;
+		permission        = 0x00;
+		category          = CommandCategory.Info;
+	}
+
+	override void Run(Server server, Client client, string[] args) {
+		if (args.length == 0) {
+			/*client.SendMessage("&eAll commands:");
+
+			foreach (ref command ; server.commands.commands) {
+				client.SendMessage(format("  &a%s", command.name));
+			}
+
+			client.SendMessage(
+				format(
+					"&e%d commands available", server.commands.commands.length
+				)
+			);*/
+			client.SendMessage("&aAll categories:");
+
+			for (auto i = CommandCategory.Info; i < CommandCategory.End; ++ i) {
+				client.SendMessage(format("%s", cast(CommandCategory) i));
+			}
+		}
+		else if (args[0] == "category") {
+			if (args.length < 2) {
+				client.SendMessage("&cCommand category required");
+				return;
+			}
+
+			CommandCategory category;
+
+			try {
+				category = server.commands.ToCategory(args[1]);
+			}
+			catch (CommandException e) {
+				client.SendMessage(format("&c%s", e.msg));
+				return;
+			}
+
+			uint amount;
+
+			client.SendMessage(format("&eAll %s commands:", category));
+
+			foreach (ref command ; server.commands.commands) {
+				if (command.category == category) {
+					client.SendMessage(format("  &a%s", command.name));
+					++ amount;
+				}
+			}
+
+			client.SendMessage(format("&eTotal: &a%d", amount));
+		}
+		else {
+			Command command;
+
+			try {
+				command = server.commands.GetCommand(args[0]);
+			}
+			catch (CommandException e) {
+				client.SendMessage(format("&c%s", e.msg));
+				return;
+			}
+
+			foreach (ref line ; command.help) {
+				client.SendMessage(line);
+			}
+
+			string aliases;
+
+			foreach (key, value ; server.commands.aliases) {
+				if (value == command.name) {
+					aliases ~= format("%s, ", key);
+				}
+			}
+
+			aliases = aliases[0 .. $ - 2];
+
+			client.SendMessage(format("&eAliases: &f%s", aliases));
+		}
+	}
+}
+
+class InfoCommand : Command {
+	this() {
+		name = "info";
+		help = [
+			"&a/info <player>",
+			"&eShows info for the given player",
+			"&eIf player not given, shows your info"
+		];
+		argumentsRequired = 0;
+		permission        = 0x00;
+		category          = CommandCategory.Info;
+	}
+
+	override void Run(Server server, Client client, string[] args) {
+		string username;
+	
+		if (args.length == 0) {
+			username = client.username;
+		}
+		else {
+			username = args[0];
+		}
+
+		JSONValue info;
+
+		try {
+			info = server.GetPlayerInfo(username);
+		}
+		catch (ServerException e) {
+			client.SendMessage(format("&c%s", username));
+			return;
+		}
+
+		client.SendMessage(format("&aInfo for &e%s", username));
+		client.SendMessage(
+			format(
+				"  &aRank:&e %s",
+				server.GetRankName(cast(ubyte) info["rank"].integer)
+			)
+		);
+
+		if (info["banned"].boolean) {
+			client.SendMessage("  &aPlayer is banned");
+		}
+
+		if (server.config.owner == username) {
+			client.SendMessage("  &aPlayer is the server owner");
+		}
+	}
+}
+
+class ServerInfoCommand : Command {
+	this() {
+		name = "serverinfo";
+		help = [
+			"&a/serverinfo",
+			"&eShows info about the server"
+		];
+		argumentsRequired = 0;
+		permission        = 0x00;
+		category          = CommandCategory.Info;
+	}
+
+	override void Run(Server server, Client client, string[] args) {
+		client.SendMessage(format("&eAbout &a%s", server.config.name));
+		client.SendMessage("  &eRunning &aMCYeti");
+		client.SendMessage(format("  &eOwner: &a%s", server.config.owner));
+	}
+}
+
+class RanksCommand : Command {
+	this() {
+		name = "ranks";
+		help = [
+			"&a/ranks",
+			"&eShows all ranks"
+		];
+		argumentsRequired = 0;
+		permission        = 0x00;
+		category          = CommandCategory.Info;
+	}
+
+	override void Run(Server server, Client client, string[] args) {
+		client.SendMessage("&aRanks:");
+		
+		foreach (key, value ; server.ranks.object) {
+			client.SendMessage(format("  &e%s", key));
+		}
+	}
+}
+
+class LevelsCommand : Command {
+	this() {
+		name = "levels";
+		help = [
+			"&a/levels",
+			"&eShows all levels"
+		];
+		argumentsRequired = 0;
+		permission        = 0x00;
+		category          = CommandCategory.Info;
+	}
+
+	override void Run(Server server, Client client, string[] args) {
+		string folder = dirName(thisExePath()) ~ "/worlds";
+
+		uint amount;
+
+		client.SendMessage("&eAvailable levels:");
+
+		foreach (entry ; dirEntries(folder, SpanMode.shallow)) {
+			string name = baseName(entry.name).stripExtension();
+
+			client.SendMessage(format("  &a%s", name));
+
+			++ amount;
+		}
+
+		client.SendMessage(format("&a%d&e levels", amount));
+	}
+}
+
+class PlayersCommand : Command {
+	this() {
+		name = "players";
+		help = [
+			"&a/players",
+			"&eShows all online players"
+		];
+		argumentsRequired = 0;
+		permission        = 0x00;
+		category          = CommandCategory.Info;
+	}
+
+	override void Run(Server server, Client client, string[] args) {
+		client.SendMessage("&ePlayers online:");
+
+		foreach (ref clienti ; server.clients) {
+			if (clienti.authenticated) {
+				if (clienti.world) {
+					client.SendMessage(
+						format(
+							"  &a%s (%s)", clienti.username,
+							clienti.world.GetName()
+						)
+					);
+				}
+				else {
+					client.SendMessage(format("  &a%s", clienti.username));
+				}
+			}
+		}
+
+		client.SendMessage(
+			format("&a%d&e players online", server.clients.length)
+		);
+	}
+}
