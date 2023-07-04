@@ -43,7 +43,7 @@ class PerbuildCommand : Command {
 			client.SendMessage(format("&c%s", e.msg));
 		}
 
-		client.world.permissionBuild = rank;
+		client.world.SetPermissionBuild(rank);
 		client.world.Save();
 
 		client.SendMessage("&aPerbuild changed");
@@ -78,7 +78,7 @@ class PervisitCommand : Command {
 			client.SendMessage(format("&c%s", e.msg));
 		}
 
-		client.world.permissionVisit = rank;
+		client.world.SetPermissionVisit(rank);
 		client.world.Save();
 
 		client.SendMessage("&aPervisit changed");
@@ -120,7 +120,7 @@ class GotoCommand : Command {
 
 		auto world = server.GetWorld(args[0]);
 
-		if (world.permissionVisit > client.info["rank"].integer) {
+		if (world.GetPermissionVisit() > client.info["rank"].integer) {
 			client.SendMessage("&cYou can't go to this map");
 			return;
 		}
