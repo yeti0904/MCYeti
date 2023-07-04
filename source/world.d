@@ -7,6 +7,7 @@ import std.stdio;
 import std.random;
 import std.bitmanip;
 import std.algorithm;
+import core.thread.osthread;
 import fast_noise;
 import mcyeti.util;
 import mcyeti.types;
@@ -74,10 +75,10 @@ class WorldException : Exception {
 }
 
 class World {  
-	Vec3!ushort spawn;
-	Client[256] clients;
-	ubyte       permissionBuild;
-	ubyte       permissionVisit;
+	Vec3!ushort    spawn;
+	Client[256]    clients;
+	private ubyte  permissionBuild;
+	private ubyte  permissionVisit;
 
 	private string name;
 	private ubyte[] blocks;
@@ -390,7 +391,29 @@ class World {
 		assert(0);
 	}
 
-	ubyte[] CreateBlockArray() {
+	void SetPermissionBuild(ubyte permissionBuild) {
+		if (this.permissionBuild != permissionBuild) {
+			this.permissionBuild = permissionBuild;
+			changed = true;
+		}
+	}
+
+	ubyte GetPermissionBuild() {
+		return permissionBuild;
+	}
+
+	void SetPermissionVisit(ubyte permissionVisit) {
+		if (this.permissionVisit != permissionVisit) {
+			this.permissionVisit = permissionVisit;
+			changed = true;
+		}
+	}
+
+	ubyte GetPermissionVisit() {
+		return permissionVisit;
+	}
+
+	private ubyte[] CreateBlockArray() {
 		return new ubyte[](size.x * size.y * size.z);
 	}
 }

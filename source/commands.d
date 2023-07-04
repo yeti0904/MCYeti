@@ -156,12 +156,6 @@ class BanCommand : Command {
 	}
 
 	override void Run(Server server, Client client, string[] args) {
-		// todo no longer needed?
-		if (args.length == 0) {
-			client.SendMessage("&cUsername parameter required");
-			return;
-		}
-
 		auto username = args[0];
 
 		JSONValue info;
@@ -201,12 +195,6 @@ class UnbanCommand : Command {
 	}
 
 	override void Run(Server server, Client client, string[] args) {
-		// todo no longer needed?
-		if (args.length == 0) {
-			client.SendMessage("&cUsername parameter required");
-			return;
-		}
-
 		auto username = args[0];
 
 		JSONValue info;
@@ -241,12 +229,6 @@ class IPBanCommand : Command {
 	}
 
 	override void Run(Server server, Client client, string[] args) {
-		// todo no longer needed?
-		if (args.length != 2) {
-			client.SendMessage("&c2 parameters required");
-			return;
-		}
-
 		switch (args[0]) {
 			case "ip": {
 				server.KickIPs(args[1], "You are banned!");
@@ -288,12 +270,6 @@ class IPUnbanCommand : Command {
 	override void Run(Server server, Client client, string[] args) {
 		string   path = dirName(thisExePath()) ~ "/banned_ips.txt";
 		string[] ips  = readText(path).split('\n');
-
-		// todo no longer needed?
-		if (args.length != 1) {
-			client.SendMessage("&c1 parameter required (IP)");
-			return;
-		}
 
 		if (!ips.canFind(args[0])) {
 			client.SendMessage("&cIP not banned");
@@ -359,12 +335,6 @@ class PerbuildCommand : Command {
 	}
 
 	override void Run(Server server, Client client, string[] args) {
-		// todo no longer needed?
-		if (args.length != 1) {
-			client.SendMessage("&c1 parameter required");
-			return;
-		}
-
 		ubyte rank;
 
 		try {
@@ -374,7 +344,7 @@ class PerbuildCommand : Command {
 			client.SendMessage(format("&c%s", e.msg));
 		}
 
-		client.world.permissionBuild = rank;
+		client.world.SetPermissionBuild(rank);
 		client.world.Save();
 
 		client.SendMessage("&aPerbuild changed");
@@ -393,12 +363,6 @@ class PervisitCommand : Command {
 	}
 
 	override void Run(Server server, Client client, string[] args) {
-		// todo no longer needed?
-		if (args.length != 1) {
-			client.SendMessage("&c1 parameter required");
-			return;
-		}
-
 		ubyte rank;
 
 		try {
@@ -408,7 +372,7 @@ class PervisitCommand : Command {
 			client.SendMessage(format("&c%s", e.msg));
 		}
 
-		client.world.permissionVisit = rank;
+		client.world.SetPermissionVisit(rank);
 		client.world.Save();
 
 		client.SendMessage("&aPervisit changed");
@@ -427,12 +391,6 @@ class GotoCommand : Command {
 	}
 
 	override void Run(Server server, Client client, string[] args) {
-		// todo no longer needed?
-		if (args.length != 1) {
-			client.SendMessage("&c1 parameter required");
-			return;
-		}
-
 		if (!server.WorldLoaded(args[0])) {
 			try {
 				server.LoadWorld(args[0]);
@@ -449,7 +407,7 @@ class GotoCommand : Command {
 
 		auto world = server.GetWorld(args[0]);
 
-		if (world.permissionVisit > client.info["rank"].integer) {
+		if (world.GetPermissionVisit() > client.info["rank"].integer) {
 			client.SendMessage("&cYou can't go to this map");
 			return;
 		}
@@ -503,7 +461,7 @@ class NewLevelCommand : Command {
 
 		server.worlds ~= world;
 
-		client.SendMessage("&aCreated level");
+		client.SendMessage("&aCreated level, use /goto to access it");
 	}
 }
 
