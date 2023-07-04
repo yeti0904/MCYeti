@@ -273,6 +273,10 @@ class Server {
 			throw new ServerException(e.msg);
 		}
 		catch (Exception e) {
+			// don't share e.msg with the player as
+			// it may contain vulnerable technical data
+			// (WorldException's e.msg was okay because it can be thrown
+			// only by us)
 			throw new ServerException("An unknown error occurred while loading the world");
 		}
 	}

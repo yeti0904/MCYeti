@@ -237,7 +237,7 @@ class Client {
 				
 				auto pos = Vec3!ushort(packet.x, packet.y, packet.z);
 
-				if (info["rank"].integer < world.permissionBuild) {
+				if (info["rank"].integer < world.GetPermissionBuild()) {
 					SendMessage("&cYou can't build here");
 
 					auto resetPacket  = new S2C_SetBlock();
