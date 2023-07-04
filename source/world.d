@@ -393,9 +393,9 @@ class World {
 		assert(0);
 	}
 
-	void SetPermissionBuild(ubyte permissionBuild) {
-		if (this.permissionBuild != permissionBuild) {
-			this.permissionBuild = permissionBuild;
+	void SetPermissionBuild(ubyte value) {
+		if (permissionBuild != value) {
+			permissionBuild = value;
 			changed = true;
 		}
 	}
@@ -404,9 +404,9 @@ class World {
 		return permissionBuild;
 	}
 
-	void SetPermissionVisit(ubyte permissionVisit) {
-		if (this.permissionVisit != permissionVisit) {
-			this.permissionVisit = permissionVisit;
+	void SetPermissionVisit(ubyte value) {
+		if (permissionVisit != value) {
+			permissionVisit = value;
 			changed = true;
 		}
 	}
