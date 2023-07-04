@@ -102,9 +102,11 @@ class HelpCommand : Command {
 				}
 			}
 
-			aliases = aliases[0 .. $ - 2];
+			if (aliases.length > 0) {
+				aliases = aliases[0 .. $ - 2];
 
-			client.SendMessage(format("&eAliases: &f%s", aliases));
+				client.SendMessage(format("&eAliases: &f%s", aliases));
+			}
 		}
 	}
 }
