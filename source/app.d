@@ -3,6 +3,7 @@ module mcyeti.app;
 import std.file;
 import std.path;
 import std.stdio;
+import std.format;
 import core.thread;
 import mcyeti.server;
 
@@ -10,7 +11,8 @@ void main() {
 	string[] folders = [
 		"worlds",
 		"players",
-		"properties"
+		"properties",
+		"blockdb"
 	];
 	string[] files = [
 		"banned_ips.txt"
@@ -25,6 +27,22 @@ void main() {
 	foreach (ref file ; files) {
 		if (!exists(file)) {
 			std.file.write(dirName(thisExePath()) ~ '/' ~ file, "");
+		}
+	}
+
+	// create blockDBs for worlds that don't have one
+	string worldsFolder = dirName(thisExePath()) ~ "/worlds/";
+	
+	foreach (entry ; dirEntries(worldsFolder, SpanMode.shallow)) {
+		if (entry.name.extension() == ".ylv") {
+			string dbPath = format(
+				"%s/blockdb/%s.db", dirName(thisExePath()),
+				baseName(entry.name).stripExtension()
+			);
+
+			if (!exists(dbPath)) {
+				std.file.write(dbPath, []);
+			}
 		}
 	}
 

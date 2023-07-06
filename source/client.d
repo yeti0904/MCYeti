@@ -10,24 +10,32 @@ import std.stdio;
 import std.format;
 import std.socket;
 import std.bitmanip;
+import std.datetime;
 import std.algorithm;
 import std.digest.md;
 import mcyeti.util;
 import mcyeti.types;
 import mcyeti.world;
 import mcyeti.server;
+import mcyeti.blockdb;
 import mcyeti.protocol;
 import mcyeti.commandManager;
 
+alias MarkCallback = void function(Client, Server, void*);
+
 class Client {
-	Socket    socket;
-	string    ip;
-	string    username;
-	bool      authenticated;
-	ubyte[]   inBuffer;
-	ubyte[]   outBuffer;
-	World     world;
-	JSONValue info;
+	Socket        socket;
+	string        ip;
+	string        username;
+	bool          authenticated;
+	ubyte[]       inBuffer;
+	ubyte[]       outBuffer;
+	World         world;
+	JSONValue     info;
+	Vec3!ushort[] marks;
+	uint          marksWaiting;
+	MarkCallback  markCallback;
+	ushort        markBlock;
 	
 	private Vec3!float pos;
 	private Dir3D      direction;    
@@ -131,6 +139,12 @@ class Client {
 		pos = world.spawn.CastTo!float();
 
 		world.NewClient(this, server);
+	}
+
+	void Mark(uint amount, MarkCallback callback) {
+		marksWaiting = amount;
+		markCallback = callback;
+		SendMessage("&eMark a block");
 	}
 
 	void Update(Server server) {
@@ -237,9 +251,38 @@ class Client {
 				
 				auto pos = Vec3!ushort(packet.x, packet.y, packet.z);
 
+				bool resetBlock = false;
+
 				if (info["rank"].integer < world.GetPermissionBuild()) {
 					SendMessage("&cYou can't build here");
+					resetBlock = true;
+				}
 
+				if (marksWaiting > 0) {
+					-- marksWaiting;
+
+					marks      ~= pos;
+					resetBlock  = true;
+					markBlock   = packet.blockType;
+
+					if (marksWaiting > 0) {
+						SendMessage("&eMark a block");
+					}
+					else {
+						if (markCallback) {
+							markCallback(this, server, null);
+							marksWaiting = 0;
+							markCallback = null;
+							markBlock    = 0;
+							marks        = [];
+						}
+						else {
+							SendMessage("&eWarning: no mark callback set");
+						}
+					}
+				}
+
+				if (resetBlock) {
 					auto resetPacket  = new S2C_SetBlock();
 					resetPacket.x     = packet.x;
 					resetPacket.y     = packet.y;
@@ -259,6 +302,20 @@ class Client {
 				}
 				world.SetBlock(packet.x, packet.y, packet.z, blockType);
 
+				// save to BlockDB
+				auto blockdb = new BlockDB(world.GetName());
+
+				auto entry = BlockEntry(
+					username,
+					packet.x,
+					packet.y,
+					packet.z,
+					blockType,
+					Clock.currTime().toUnixTime(),
+					""
+				);
+
+				blockdb.AppendEntry(entry);
 				break;
 			}
 			case C2S_Position.pid: {

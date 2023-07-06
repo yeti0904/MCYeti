@@ -54,6 +54,7 @@ class CommandManager {
 		LoadCommand(new NewLevelCommand());
 		LoadCommand(new LevelsCommand());
 		LoadCommand(new PlayersCommand());
+		LoadCommand(new BlockInfoCommand());
 	}
 
 	CommandCategory ToCategory(string str) {

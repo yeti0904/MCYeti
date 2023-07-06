@@ -13,6 +13,7 @@ import mcyeti.types;
 import mcyeti.world;
 import mcyeti.client;
 import mcyeti.server;
+import mcyeti.blockdb;
 import mcyeti.commandManager;
 
 class PerbuildCommand : Command {
@@ -176,5 +177,66 @@ class NewLevelCommand : Command {
 		server.worlds ~= world;
 
 		client.SendMessage("&aCreated level");
+	}
+}
+
+
+class BlockInfoCommand : Command {
+	this() {
+		name = "blockinfo";
+		help = [
+			"&a/blockinfo",
+			"&eShows history and type of a block"
+		];
+		argumentsRequired = 0;
+		permission        = 0x00;
+		category          = CommandCategory.World;
+	}
+	
+	static void MarkCallback(Client client, Server server, void* extra) {
+		auto pos     = client.marks[0];
+		auto blockdb = new BlockDB(client.world.GetName());
+
+		client.SendMessage("&eRetrieving block change records...");
+
+		for (ulong i = 0; i < blockdb.GetEntryAmount(); ++ i) {
+			auto entry    = blockdb.GetEntry(i);
+			auto entryPos = Vec3!ushort(entry.x, entry.y, entry.z);
+
+			if (entryPos != pos) {
+				continue;
+			}
+
+			string msg;
+
+			if (entry.blockType == 0) {
+				msg = format("%s deleted this block", entry.player);
+			}
+			else {
+				msg = format(
+					"&f%s &eplaced &f%s", entry.player,
+					cast(Block) entry.blockType
+				);
+			}
+
+			client.SendMessage("  &e" ~ msg);
+		}
+
+		auto block = client.world.GetBlock(pos.x, pos.y, pos.z);
+
+		client.SendMessage(
+			format(
+				"&eBlock at (%d, %d, %d): &f%d = %s",
+				pos.x, pos.y, pos.z, block, cast(Block) block
+			)
+		);
+	}
+
+	override void Run(Server server, Client client, string[] args) {
+		if (client.world is null) {
+			return;
+		}
+	
+		client.Mark(1, &MarkCallback);
 	}
 }

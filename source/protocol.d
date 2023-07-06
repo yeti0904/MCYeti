@@ -12,19 +12,25 @@ class ProtocolException : Exception {
 	}
 }
 
-ubyte[] ToClassicString(string str) {
-	if (str.length > 64) {
-		throw new ProtocolException(format("'%s' is longer than 64 chars", str));
+ubyte[] ToClassicString(string str, ulong size = 64) {
+	if (str.length > size) {
+		throw new ProtocolException(
+			format("'%s' is longer than %d chars", str, size)
+		);
 	}
 
-	ubyte[] ret = new ubyte[](64);
+	ubyte[] ret = new ubyte[](size);
 	ret[0 .. str.length] = str.representation;
 	ret[str.length .. $] = ' ';
 
 	return ret;
 }
 
-string FromClassicString(ubyte[] str) {
+string FromClassicString(ubyte[] str, ulong size = 64) {
+	if (str.length != size) {
+		throw new ProtocolException("Not a classic string");
+	}
+
 	string ret = cast(string) str.idup;
 
 	return ret.stripRight();

@@ -18,3 +18,5 @@ players
 banned_ips.txt
 properties
 worlds
+blockdb
+blockdb/*
