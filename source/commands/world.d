@@ -7,6 +7,7 @@ import std.path;
 import std.array;
 import std.format;
 import std.string;
+import std.datetime;
 import std.algorithm;
 import core.stdc.stdlib;
 import mcyeti.types;
@@ -209,17 +210,31 @@ class BlockInfoCommand : Command {
 
 			string msg;
 
+			SysTime currentTime = SysTime.fromUnixTime(
+				Clock.currTime().toUnixTime()
+			);
+
+			SysTime entryTime = SysTime.fromUnixTime(
+				SysTime.fromUnixTime(entry.time).toUnixTime()
+			);
+
+			Duration time = currentTime - entryTime;
+
+			msg = format(
+				"  &e%s ago: ", time.toString
+			);
+
 			if (entry.blockType == 0) {
-				msg = format("%s deleted this block", entry.player);
+				msg ~= format("&f%s&e deleted this block", entry.player);
 			}
 			else {
-				msg = format(
+				msg ~= format(
 					"&f%s &eplaced &f%s", entry.player,
 					cast(Block) entry.blockType
 				);
 			}
 
-			client.SendMessage("  &e" ~ msg);
+			client.SendMessage(msg);
 		}
 
 		auto block = client.world.GetBlock(pos.x, pos.y, pos.z);

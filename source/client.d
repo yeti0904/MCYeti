@@ -225,7 +225,7 @@ class Client {
 				identification.protocolVersion = 0x07;
 				identification.serverName      = server.config.name;
 				identification.motd            = server.config.motd;
-				identification.userType        = 0x00;
+				identification.userType        = 0x64;
 
 				outBuffer ~= identification.CreateData();
 
