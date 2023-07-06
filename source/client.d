@@ -36,6 +36,7 @@ class Client {
 	uint          marksWaiting;
 	MarkCallback  markCallback;
 	ushort        markBlock;
+	void*         markInfo;
 	
 	private Vec3!float pos;
 	private Dir3D      direction;    
@@ -141,9 +142,10 @@ class Client {
 		world.NewClient(this, server);
 	}
 
-	void Mark(uint amount, MarkCallback callback) {
+	void Mark(uint amount, MarkCallback callback, void* info) {
 		marksWaiting = amount;
 		markCallback = callback;
+		markInfo     = info;
 		SendMessage("&eMark a block");
 	}
 
@@ -270,7 +272,7 @@ class Client {
 					}
 					else {
 						if (markCallback) {
-							markCallback(this, server, null);
+							markCallback(this, server, markInfo);
 							marksWaiting = 0;
 							markCallback = null;
 							markBlock    = 0;

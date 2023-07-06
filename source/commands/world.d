@@ -234,6 +234,10 @@ class BlockInfoCommand : Command {
 				);
 			}
 
+			if (entry.extra.length > 0) {
+				msg ~= format(" %s", entry.extra);
+			}
+
 			client.SendMessage(msg);
 		}
 
@@ -252,6 +256,6 @@ class BlockInfoCommand : Command {
 			return;
 		}
 	
-		client.Mark(1, &MarkCallback);
+		client.Mark(1, &MarkCallback, null);
 	}
 }

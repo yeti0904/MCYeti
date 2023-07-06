@@ -6,15 +6,17 @@ import mcyeti.util;
 import mcyeti.client;
 import mcyeti.server;
 import mcyeti.commands.info;
-import mcyeti.commands.moderation;
 import mcyeti.commands.other;
 import mcyeti.commands.world;
+import mcyeti.commands.building;
+import mcyeti.commands.moderation;
 
 enum CommandCategory {
 	Info,
 	Moderation,
 	Other,
 	World,
+	Building,
 
 	End
 }
@@ -56,6 +58,7 @@ class CommandManager {
 		LoadCommand(new PlayersCommand());
 		LoadCommand(new BlockInfoCommand());
 		LoadCommand(new AddAliasCommand());
+		LoadCommand(new CuboidCommand());
 	}
 
 	CommandCategory ToCategory(string str) {
