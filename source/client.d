@@ -46,6 +46,38 @@ class Client {
 		ip     = socket.remoteAddress.toAddrString();
 	}
 
+	string GetDisplayName(bool includeTitle = false) {
+		string ret;
+
+		if (includeTitle) {
+			ret ~= format("[%s] ", info["title"].str);
+		}
+		
+		ret ~= format(
+			"&%s%s",
+			info["colour"].str,
+			info["nickname"].str == ""? username : info["nickname"].str
+		);
+
+		return ret;
+	}
+
+	static string GetDisplayName(string username, JSONValue pinfo, bool includeTitle = false) {
+		string ret;
+
+		if (includeTitle) {
+			ret ~= format("[%s] ", pinfo["title"].str);
+		}
+		
+		ret ~= format(
+			"&%s%s",
+			pinfo["colour"].str,
+			pinfo["nickname"].str == ""? username : pinfo["nickname"].str
+		);
+
+		return ret;
+	}
+
 	Vec3!float GetPosition() {
 		return pos;
 	}
@@ -208,13 +240,25 @@ class Client {
 					SaveInfo();
 				}
 
+				// new player info stuff
+				if ("colour" !in info) {
+					info["colour"] = "f";
+				}
+				if ("title" !in info) {
+					info["title"] = "";
+				}
+				if ("nickname" !in info) {
+					info["nickname"] = "";
+				}
+				SaveInfo();
+
 				if (info["banned"].boolean) {
 					server.Kick(this, "You're banned!");
 					return;
 				}
 
 				server.SendGlobalMessage(
-					format("&a+&f %s has connected", username)
+					format("&a+&f %s &fhas connected", GetDisplayName(true))
 				);
 
 				if (server.config.owner == username) {
@@ -295,6 +339,8 @@ class Client {
 					break;
 				}
 
+				auto oldBlock = world.GetBlock(packet.x, packet.y, packet.z);
+
 				ubyte blockType;
 				if (packet.mode == 0x01) { // created
 					blockType = packet.blockType;
@@ -313,6 +359,7 @@ class Client {
 					packet.y,
 					packet.z,
 					blockType,
+					oldBlock,
 					Clock.currTime().toUnixTime(),
 					""
 				);
@@ -417,7 +464,9 @@ class Client {
 				}
 
 				
-				auto message = format("%s: %s", username, packet.message);
+				auto message = format(
+					"%s: &f%s", GetDisplayName(true), packet.message
+				);
 				server.SendGlobalMessage(message);
 				break;
 			}

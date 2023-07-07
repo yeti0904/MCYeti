@@ -12,9 +12,10 @@ struct BlockEntry {
 	ushort  y;
 	ushort  z;
 	ushort  blockType;
+	ushort  previousBlock;
 	ulong   time;
 	string  extra;
-} // 48 bytes
+} // 50 bytes
 
 class BlockDBException : Exception {
 	this(string msg, string file = __FILE__, size_t line = __LINE__) {
@@ -25,16 +26,24 @@ class BlockDBException : Exception {
 class BlockDB {
 	private string path;
 
-	static size_t blockEntrySize = 48;
+	static size_t blockEntrySize = 50;
+	static ushort latestVersion  = 0x00;
 	
 	this(string name) {
 		path = dirName(thisExePath()) ~ "/blockdb/" ~ name ~ ".db";
 		
 		auto file = File(path, "rb");
 
-		if (file.size() % blockEntrySize != 0) {
+		if ((file.size < 2) || (file.size() - 2 % blockEntrySize != 0)) {
 			throw new BlockDBException("Invalid BlockDB");
 		}
+	}
+
+	static void CreateBlockDB(string name) {
+		string path = dirName(thisExePath()) ~ "/blockdb/" ~ name ~ ".db";
+
+		ubyte[] metadata = cast(ubyte[]) latestVersion.nativeToBigEndian().idup;
+		std.file.write(path, metadata);
 	}
 
 	File Open(string mode) {
@@ -46,16 +55,17 @@ class BlockDB {
 	
 		file.seek(index * blockEntrySize);
 		
-		auto data = file.rawRead(new ubyte[blockEntrySize]);
+		auto data = file.rawRead(new ubyte[blockEntrySize])[2 .. $];
 
 		BlockEntry ret;
-		ret.player    = data[0 .. 16].FromClassicString(16);
-		ret.x         = data[16 .. 18].bigEndianToNative!ushort();
-		ret.y         = data[18 .. 20].bigEndianToNative!ushort();
-		ret.z         = data[20 .. 22].bigEndianToNative!ushort();
-		ret.blockType = data[22 .. 24].bigEndianToNative!ushort();
-		ret.time      = data[24 .. 32].bigEndianToNative!ulong();
-		ret.extra     = data[32 .. 48].FromClassicString(16);
+		ret.player        = data[0 .. 16].FromClassicString(16);
+		ret.x             = data[16 .. 18].bigEndianToNative!ushort();
+		ret.y             = data[18 .. 20].bigEndianToNative!ushort();
+		ret.z             = data[20 .. 22].bigEndianToNative!ushort();
+		ret.blockType     = data[22 .. 24].bigEndianToNative!ushort();
+		ret.previousBlock = data[24 .. 26].bigEndianToNative!ushort();
+		ret.time          = data[26 .. 34].bigEndianToNative!ulong();
+		ret.extra         = data[34 .. 50].FromClassicString(16);
 
 		return ret;
 	}
@@ -70,8 +80,9 @@ class BlockDB {
 		ret[18 .. 20] = entry.y.nativeToBigEndian();
 		ret[20 .. 22] = entry.z.nativeToBigEndian();
 		ret[22 .. 24] = entry.blockType.nativeToBigEndian();
-		ret[24 .. 32] = entry.time.nativeToBigEndian();
-		ret[32 .. 48] = entry.extra.ToClassicString(16);
+		ret[24 .. 26] = entry.previousBlock.nativeToBigEndian();
+		ret[26 .. 34] = entry.time.nativeToBigEndian();
+		ret[34 .. 50] = entry.extra.ToClassicString(16);
 
 		return ret;
 	}

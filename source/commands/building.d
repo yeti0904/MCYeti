@@ -45,19 +45,22 @@ class CuboidCommand : Command {
 		for (ushort y = start.y; y <= end.y; ++ y) {
 			for (ushort z = start.z; z <= end.z; ++ z) {
 				for (ushort x = start.x; x <= end.x; ++ x) {
+					auto oldBlock = client.world.GetBlock(x, y, z);
+				
 					client.world.SetBlock(
 						x, y, z, cast(ubyte) client.markBlock
 					);
 
 					// make blockdb entry
 					BlockEntry entry;
-					entry.player    = client.username;
-					entry.x         = x;
-					entry.y         = y;
-					entry.z         = z;
-					entry.blockType = client.markBlock;
-					entry.time      = Clock.currTime().toUnixTime();
-					entry.extra     = "(Drawn)";
+					entry.player        = client.username;
+					entry.x             = x;
+					entry.y             = y;
+					entry.z             = z;
+					entry.blockType     = client.markBlock;
+					entry.previousBlock = oldBlock;
+					entry.time          = Clock.currTime().toUnixTime();
+					entry.extra         = "(Drawn)";
 					blockdb.AppendEntry(entry);
 				}
 			}

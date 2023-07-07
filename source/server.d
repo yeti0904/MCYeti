@@ -97,12 +97,18 @@ class Server {
 			aliases = parseJSON(readText(aliasesPath));
 		}
 		else {
-			aliases["g"]      = "goto";
-			aliases["sinfo"]  = "serverinfo";
-			aliases["i"]      = "info";
-			aliases["newlvl"] = "newlevel";
-			aliases["a"]      = "abort";
-			aliases["b"]      = "blockinfo";
+			aliases["g"]       = "goto";
+			aliases["sinfo"]   = "serverinfo";
+			aliases["i"]       = "info";
+			aliases["newlvl"]  = "newlevel";
+			aliases["a"]       = "abort";
+			aliases["b"]       = "blockinfo";
+			aliases["xnick"]   = "mynick";
+			aliases["xcolour"] = "mycolour";
+			aliases["xtitle"]  = "mytitle";
+			aliases["color"]   = "colour";
+			aliases["mycolor"] = "mycolour";
+			aliases["xcolor"]  = "mycolour";
 		
 			std.file.write(aliasesPath, aliases.toPrettyString());
 		}
@@ -196,6 +202,29 @@ class Server {
 		uptime.start();
 
 		Log("Listening at %s:%d", config.ip, config.port);
+	}
+
+	char[string] GetChatColours() {
+		char[string] ret;
+
+		ret["black"]  = '0';
+		ret["navy"]   = '1';
+		ret["green"]  = '2';
+		ret["teal"]   = '3';
+		ret["maroon"] = '4';
+		ret["purple"] = '5';
+		ret["gold"]   = '6';
+		ret["silver"] = '7';
+		ret["gray"]   = '8';
+		ret["blue"]   = '9';
+		ret["lime"]   = 'a';
+		ret["aqua"]   = 'b';
+		ret["red"]    = 'c';
+		ret["pink"]   = 'd';
+		ret["yellow"] = 'e';
+		ret["white"]  = 'f';
+
+		return ret;
 	}
 
 	JSONValue ConfigAsJSON() {
@@ -414,8 +443,11 @@ class Server {
 		
 		if (client.authenticated && !client.info["banned"].boolean) {
 			string msg = message != ""?
-				format("&c-&f %s disconnected (%s)", client.username, message) :
-				format("&c-&f %s disconnected", client.username);
+				format(
+					"&c-&f %s disconnected (%s)", client.GetDisplayName(),
+					message
+				) :
+				format("&c-&f %s disconnected", client.GetDisplayName());
 		
 			SendGlobalMessage(msg);
 		}

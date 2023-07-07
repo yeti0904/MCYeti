@@ -151,7 +151,9 @@ class InfoCommand : Command {
 			return;
 		}
 
-		client.SendMessage(format("&aInfo for &e%s", username));
+		string displayName = Client.GetDisplayName(username, info, true);
+
+		client.SendMessage(format("&aInfo for &e%s", displayName));
 		client.SendMessage(
 			format(
 				"  &aRank:&e %s",

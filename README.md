@@ -7,7 +7,7 @@ dub build
 ```
 
 ## Set up guide
-1. build the server with `dub build`
+1. build the server with `dub build` it will make a server executable in the root directory called `mcyeti`
 2. run the server and then immediately kill it (with Control C for example)
 3. edit properties/server.json and set the owner value to your username
 4. port forward if required

@@ -5,6 +5,7 @@ import std.format;
 import mcyeti.util;
 import mcyeti.client;
 import mcyeti.server;
+import mcyeti.commands.chat;
 import mcyeti.commands.info;
 import mcyeti.commands.other;
 import mcyeti.commands.world;
@@ -17,7 +18,8 @@ enum CommandCategory {
 	Other,
 	World,
 	Building,
-
+	Chat,
+	
 	End
 }
 
@@ -63,22 +65,23 @@ class CommandManager {
 		LoadCommand(new CmdSetCommand());
 		LoadCommand(new SetMainCommand());
 		LoadCommand(new MainCommand());
+		LoadCommand(new ColourCommand());
+		LoadCommand(new MyColourCommand());
+		LoadCommand(new TitleCommand());
+		LoadCommand(new MyTitleCommand());
+		LoadCommand(new NickCommand());
+		LoadCommand(new MyNickCommand());
+		LoadCommand(new ShortNameCommand());
 	}
 
 	CommandCategory ToCategory(string str) {
 		switch (str.LowerString()) {
-			case "info": {
-				return CommandCategory.Info;
-			}
-			case "moderation": {
-				return CommandCategory.Moderation;
-			}
-			case "other": {
-				return CommandCategory.Other;
-			}
-			case "world": {
-				return CommandCategory.World;
-			}
+			case "info":       return CommandCategory.Info;
+			case "moderation": return CommandCategory.Moderation;
+			case "other":      return CommandCategory.Other;
+			case "world":      return CommandCategory.World;
+			case "building":   return CommandCategory.Building;
+			case "chat":       return CommandCategory.Chat;
 			default: {
 				throw new CommandException("No such category");
 			}
