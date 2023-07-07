@@ -61,6 +61,8 @@ class CommandManager {
 		LoadCommand(new CuboidCommand());
 		LoadCommand(new AbortCommand());
 		LoadCommand(new CmdSetCommand());
+		LoadCommand(new SetMainCommand());
+		LoadCommand(new MainCommand());
 	}
 
 	CommandCategory ToCategory(string str) {

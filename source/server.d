@@ -29,6 +29,7 @@ struct ServerConfig {
 	bool   publicServer;
 	string motd;
 	string owner;
+	string mainLevel;
 }
 
 class ServerException : Exception {
@@ -63,6 +64,7 @@ class Server {
 		config.name         = "[MCYeti] Default";
 		config.publicServer = true;
 		config.motd         = "Welcome!";
+		config.mainLevel    = "main";
 
 		string configPath = dirName(thisExePath()) ~ "/properties/server.json";
 		
@@ -99,6 +101,8 @@ class Server {
 			aliases["sinfo"]  = "serverinfo";
 			aliases["i"]      = "info";
 			aliases["newlvl"] = "newlevel";
+			aliases["a"]      = "abort";
+			aliases["b"]      = "blockinfo";
 		
 			std.file.write(aliasesPath, aliases.toPrettyString());
 		}
@@ -205,8 +209,34 @@ class Server {
 		ret["publicServer"] = config.publicServer;
 		ret["motd"]         = config.motd;
 		ret["owner"]        = config.owner;
+		ret["mainLevel"]    = config.mainLevel;
 
 		return ret;
+	}
+	
+	void LoadConfig() {
+		string path = dirName(thisExePath()) ~ "/properties/server.json";
+		auto   json = readText(path).parseJSON();
+
+		config.ip           = json["ip"].str;
+		config.port         = cast(ushort) json["port"].integer;
+		config.heartbeatURL = json["heartbeatURL"].str;
+		config.maxPlayers   = cast(uint) json["maxPlayers"].integer;
+		config.name         = json["name"].str;
+		config.publicServer = json["publicServer"].boolean;
+		config.motd         = json["motd"].str;
+
+		// following are config values that have been created in updates
+
+		if ("owner" in json) {
+			config.owner = json["owner"].str;
+		}
+	}
+
+	void SaveConfig() {
+		string path = dirName(thisExePath()) ~ "/properties/server.json";
+
+		std.file.write(path, ConfigAsJSON().toPrettyString());
 	}
 
 	void ReloadCmdPermissions() {
@@ -237,25 +267,11 @@ class Server {
 		std.file.write(cmdPermissionsPath, cmdPermissions.toPrettyString());
 	}
 
-	void LoadConfig() {
-		string path = dirName(thisExePath()) ~ "/properties/server.json";
-		auto   json = readText(path).parseJSON();
-
-		config.ip           = json["ip"].str;
-		config.port         = cast(ushort) json["port"].integer;
-		config.heartbeatURL = json["heartbeatURL"].str;
-		config.maxPlayers   = cast(uint) json["maxPlayers"].integer;
-		config.name         = json["name"].str;
-		config.publicServer = json["publicServer"].boolean;
-		config.motd         = json["motd"].str;
-		config.owner        = json["owner"].str;
-	}
-
 	ubyte GetRank(string name) {
 		if (name !in ranks) {
 			throw new ServerException("No such rank");
 		}
-	
+
 		return cast(ubyte) ranks[name].integer;
 	}
 
@@ -441,8 +457,11 @@ class Server {
 				client.SendWorld(world, this);
 				client.world = world;
 				UnloadEmptyWorlds();
+				return;
 			}
 		}
+
+		throw new ServerException("No such world");
 	}
 
 	void SaveAll() {

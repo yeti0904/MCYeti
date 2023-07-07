@@ -12,7 +12,8 @@ void main() {
 		"worlds",
 		"players",
 		"properties",
-		"blockdb"
+		"blockdb",
+		"backups"
 	];
 	string[] files = [
 		"banned_ips.txt"

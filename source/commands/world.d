@@ -264,3 +264,61 @@ class BlockInfoCommand : Command {
 		client.Mark(1, &MarkCallback, null);
 	}
 }
+
+class SetMainCommand : Command {
+	this() {
+		name = "setmain";
+		help = [
+			"&a/setmain",
+			"&eSets the main level to this world",
+			"&a/setmain [world name]",
+			"&eSets the main level to the given world"
+		];
+		argumentsRequired = 0;
+		permission        = 0xE0;
+		category          = CommandCategory.World;
+	}
+
+	override void Run(Server server, Client client, string[] args) {
+		string worldName;
+	
+		if (args.length == 0) {
+			if (client.world is null) {
+				client.SendMessage("&eYou are not in a world");
+				return;
+			}
+
+			worldName = client.world.GetName();
+		}
+		else {
+			worldName = args[0];
+
+			if (!server.WorldExists(worldName)) {
+				client.SendMessage("&eNo such world exists");
+				return;
+			}
+		}
+
+		server.config.mainLevel = worldName;
+		server.SaveConfig();
+
+		client.SendMessage(format("&eMain level is now &f%s", worldName));
+	}
+}
+
+class MainCommand : Command {
+	this() {
+		name = "main";
+		help = [
+			"&a/main",
+			"&eSends you to the main level"
+		];
+		argumentsRequired = 0;
+		permission        = 0x00;
+		category          = CommandCategory.World;
+	}
+
+	override void Run(Server server, Client client, string[] args) {
+		server.SendPlayerToWorld(client, server.config.mainLevel);
+	}
+}

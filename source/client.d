@@ -232,7 +232,7 @@ class Client {
 				outBuffer ~= identification.CreateData();
 
 				// send world
-				server.SendPlayerToWorld(this, "main");
+				server.SendPlayerToWorld(this, server.config.mainLevel);
 				break;
 			}
 			case C2S_SetBlock.pid: {
