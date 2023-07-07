@@ -50,6 +50,7 @@ class Server {
 	CommandManager commands;
 	string         salt;
 	JSONValue      ranks;
+	JSONValue      cmdPermissions;
 
 	this() {
 		commands = new CommandManager();
@@ -120,6 +121,17 @@ class Server {
 			worlds[$ - 1].GenerateFlat();
 			worlds[$ - 1].Save();
 		}
+
+		// load command permission overrides
+		string cmdPermissionsPath =
+			dirName(thisExePath()) ~ "/properties/cmdPermissions.json";
+
+		if (!exists(cmdPermissionsPath)) {
+			std.file.write(cmdPermissionsPath, "{}");
+		}
+		
+		cmdPermissions = readText(cmdPermissionsPath).parseJSON();
+		ReloadCmdPermissions();
 	}
 
 	~this() {
@@ -130,14 +142,15 @@ class Server {
 
 	private void RunHeartbeat() {
 		string url = format(
-		    "%s?name=%s&port=%d&users=%d&max=%d&salt=%s&public=%s&server=MCYeti",
+		    "%s?name=%s&port=%d&users=%d&max=%d&salt=%s&public=%s&software=%s",
 		    config.heartbeatURL,
 		    encodeComponent(config.name),
 		    config.port,
 		    GetConnectedIPs(),
 		    config.maxPlayers,
 		    salt,
-		    config.publicServer? "true" : "false"
+		    config.publicServer? "true" : "false",
+		    "MCYeti"
 		);
 
 		static string oldServerURL;
@@ -194,6 +207,34 @@ class Server {
 		ret["owner"]        = config.owner;
 
 		return ret;
+	}
+
+	void ReloadCmdPermissions() {
+		foreach (key, value ; cmdPermissions.object) {
+			if (!commands.CommandExists(key)) {
+				throw new ServerException(
+					format(
+						"Unknown command in cmd permissions: %s", key
+					)
+				);
+			}
+
+			auto cmd       = commands.GetCommand(key);
+			cmd.permission = cast(ubyte) value.integer;
+		}
+	}
+
+	void SetCmdPermission(Command cmd, ubyte rank) {
+		cmd.permission           = rank;
+		cmdPermissions[cmd.name] = cast(int) rank;
+		SaveCmdPermissions();
+	}
+
+	void SaveCmdPermissions() {
+		string cmdPermissionsPath =
+					dirName(thisExePath()) ~ "/properties/cmdPermissions.json";
+
+		std.file.write(cmdPermissionsPath, cmdPermissions.toPrettyString());
 	}
 
 	void LoadConfig() {
@@ -356,7 +397,7 @@ class Server {
 		}
 		
 		if (client.authenticated && !client.info["banned"].boolean) {
-			string msg = message == ""?
+			string msg = message != ""?
 				format("&c-&f %s disconnected (%s)", client.username, message) :
 				format("&c-&f %s disconnected", client.username);
 		

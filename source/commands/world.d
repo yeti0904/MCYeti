@@ -100,6 +100,11 @@ class GotoCommand : Command {
 	}
 
 	override void Run(Server server, Client client, string[] args) {
+		if (client.marksWaiting > 0) {
+			client.SendMessage("&cCannot move levels while marking");
+			return;
+		}
+	
 		// todo no longer needed?
 		if (args.length != 1) {
 			client.SendMessage("&c1 parameter required");

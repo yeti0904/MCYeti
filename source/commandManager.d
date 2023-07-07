@@ -59,6 +59,8 @@ class CommandManager {
 		LoadCommand(new BlockInfoCommand());
 		LoadCommand(new AddAliasCommand());
 		LoadCommand(new CuboidCommand());
+		LoadCommand(new AbortCommand());
+		LoadCommand(new CmdSetCommand());
 	}
 
 	CommandCategory ToCategory(string str) {

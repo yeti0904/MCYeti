@@ -102,6 +102,13 @@ class HelpCommand : Command {
 				}
 			}
 
+			client.SendMessage(
+				format(
+					"&eUsable by: &f%s+",
+					server.GetRankName(command.permission)
+				)
+			);
+
 			if (aliases.length > 0) {
 				aliases = aliases[0 .. $ - 2];
 

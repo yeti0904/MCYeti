@@ -37,3 +37,24 @@ class AddAliasCommand : Command {
 		);
 	}
 }
+
+class AbortCommand : Command {
+	this() {
+		name = "abort";
+		help = [
+			"&a/abort",
+			"&eAborts current marking command"
+		];
+		argumentsRequired = 0;
+		permission        = 0x00;
+		category          = CommandCategory.Other;
+	}
+
+	override void Run(Server server, Client client, string[] args) {
+		client.marksWaiting = 0;
+		client.marks        = [];
+		client.markCallback = null;
+		client.markBlock    = 0;
+		client.markInfo     = null;
+	}
+}

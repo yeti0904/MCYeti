@@ -206,3 +206,35 @@ class IPUnbanCommand : Command {
 		client.SendMessage("&aIP unbanned");
 	}
 }
+
+class CmdSetCommand : Command {
+	this() {
+		name = "cmdset";
+		help = [
+			"&a/cmdset [command] [permission]",
+			"&eSets the given command's permission to the given permission"
+		];
+		argumentsRequired = 2;
+		permission        = 0xE0;
+		category          = CommandCategory.Moderation;
+	}
+
+	override void Run(Server server, Client client, string[] args) {
+		if (!server.commands.CommandExists(args[0])) {
+			client.SendMessage("&cNo such command");
+			return;
+		}
+	
+		if (!server.RankExists(args[1])) {
+			client.SendMessage("&cNo such rank");
+			return;
+		}
+
+		auto cmd = server.commands.GetCommand(args[0]);
+		server.SetCmdPermission(cmd, server.GetRank(args[1]));
+
+		client.SendMessage(
+			format("&f%s &eis now usable by &f%s+", args[0], args[1])
+		);
+	}
+}
