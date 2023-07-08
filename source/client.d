@@ -47,7 +47,7 @@ class Client {
 	}
 
 	string GetDisplayName(bool includeTitle = false) {
-		string ret;
+		/*string ret;
 
 		if (includeTitle && (info["title"].str != "")) {
 			ret ~= format("[%s] ", info["title"].str);
@@ -59,14 +59,16 @@ class Client {
 			info["nickname"].str == ""? username : info["nickname"].str
 		);
 
-		return ret;
+		return ret;*/
+
+		return Client.GetDisplayName(username, info, includeTitle);
 	}
 
 	static string GetDisplayName(string username, JSONValue pinfo, bool includeTitle = false) {
 		string ret;
 
 		if (includeTitle && (pinfo["title"].str != "")) {
-			ret ~= format("[%s] ", pinfo["title"].str);
+			ret ~= format("&f[%s&f] ", pinfo["title"].str);
 		}
 		
 		ret ~= format(

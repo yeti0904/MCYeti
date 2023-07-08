@@ -204,6 +204,11 @@ class NickCommand : Command {
 			return;
 		}
 
+		auto oldNick = info["nickname"].str;
+		if (oldNick == "") {
+			oldNick = client.username;
+		}
+
 		info["nickname"] = nick;
 
 		server.SavePlayerInfo(args[0], info);
@@ -211,8 +216,7 @@ class NickCommand : Command {
 		server.SendGlobalMessage(
 			format(
 				"%s&e's nickname was changed to %s",
-				Client.GetDisplayName(args[0], info),
-				nick
+				oldNick, nick
 			)
 		);
 

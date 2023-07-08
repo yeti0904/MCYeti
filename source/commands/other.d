@@ -35,6 +35,8 @@ class AddAliasCommand : Command {
 			aliasesPath,
 			server.commands.SerialiseAliases().toPrettyString()
 		);
+
+		client.SendMessage("&aAlias added");
 	}
 }
 

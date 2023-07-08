@@ -109,6 +109,7 @@ class Server {
 			aliases["color"]   = "colour";
 			aliases["mycolor"] = "mycolour";
 			aliases["xcolor"]  = "mycolour";
+			aliases["z"]       = "cuboid";
 		
 			std.file.write(aliasesPath, aliases.toPrettyString());
 		}
