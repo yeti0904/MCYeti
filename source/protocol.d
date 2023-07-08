@@ -281,7 +281,7 @@ class S2C_SpawnPlayer : S2C_Packet {
 }
 
 class S2C_SetPosOr : S2C_Packet {
-	byte  id;
+	ubyte id;
 	float x;
 	float y;
 	float z;

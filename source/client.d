@@ -92,6 +92,21 @@ class Client {
 		return pos;
 	}
 
+	void Teleport(Vec3!float ppos) {
+		auto packet = new S2C_SetPosOr();
+
+		pos = ppos;
+
+		packet.id      = 255;
+		packet.x       = pos.x;
+		packet.y       = pos.y;
+		packet.z       = pos.z;
+		packet.yaw     = direction.yaw;
+		packet.heading = direction.heading;
+
+		outBuffer ~= packet.CreateData();
+	}
+
 	Dir3D GetDirection() {
 		return direction;
 	}

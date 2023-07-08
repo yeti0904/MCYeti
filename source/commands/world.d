@@ -324,3 +324,62 @@ class MainCommand : Command {
 		cmd.Run(server, client, [server.config.mainLevel]);
 	}
 }
+
+class TpCommand : Command {
+	this() {
+		name = "tp";
+		help = [
+			"&a/tp [username]",
+			"&eTeleports you to the given player",
+			"&a/tp [x] [y] [z]",
+			"&eTeleports you to the given coordinates"
+		];
+		argumentsRequired = 0;
+		permission        = 0x00;
+		category          = CommandCategory.World;
+	}
+
+	override void Run(Server server, Client client, string[] args) {
+		if (args.length == 3) {
+			Vec3!float pos;
+
+			try {
+				pos.x = parse!float(args[0]);
+				pos.y = parse!float(args[1]);
+				pos.z = parse!float(args[2]);
+			}
+			catch (ConvException) {
+				client.SendMessage("&cNumeric arguments required");
+				return;
+			}
+
+			client.Teleport(pos);
+		}
+		else if (args.length == 1) {
+			if (!server.PlayerOnline(args[0])) {
+				client.SendMessage("&cPlayer not online");
+				return;
+			}
+
+			auto other = server.GetPlayer(args[0]);
+
+			if (client.world is other.world) {
+				client.Teleport(other.GetPosition());
+			}
+			else {
+				auto cmd = new GotoCommand();
+				cmd.Run(server, client, [other.world.GetName()]);
+
+				if (client.world !is other.world) {
+					return;
+				}
+				
+				client.Teleport(other.GetPosition());
+			}
+		}
+		else {
+			client.SendMessage("&cInvalid parameters");
+			return;
+		}
+	}
+}
