@@ -74,6 +74,8 @@ class CommandManager {
 		LoadCommand(new ShortNameCommand());
 		LoadCommand(new ColoursCommand());
 		LoadCommand(new UndoPlayerCommand());
+		LoadCommand(new WarnCommand());
+		LoadCommand(new NotesCommand());
 	}
 
 	CommandCategory ToCategory(string str) {

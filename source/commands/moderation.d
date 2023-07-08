@@ -55,12 +55,6 @@ class BanCommand : Command {
 	}
 
 	override void Run(Server server, Client client, string[] args) {
-		// todo no longer needed?
-		if (args.length == 0) {
-			client.SendMessage("&cUsername parameter required");
-			return;
-		}
-
 		auto username = args[0];
 
 		JSONValue info;
@@ -74,6 +68,11 @@ class BanCommand : Command {
 		}
 
 		info["banned"] = true;
+		info["infractions"].array ~= JSONValue(
+			format(
+				"Banned by %s on %s", client.username, DateToday()
+			)
+		);
 
 		server.SavePlayerInfo(username, info);
 
@@ -101,12 +100,6 @@ class UnbanCommand : Command {
 	}
 
 	override void Run(Server server, Client client, string[] args) {
-		// todo no longer needed?
-		if (args.length == 0) {
-			client.SendMessage("&cUsername parameter required");
-			return;
-		}
-
 		auto username = args[0];
 
 		JSONValue info;
@@ -120,6 +113,11 @@ class UnbanCommand : Command {
 		}
 
 		info["banned"] = false;
+		info["infractions"].array ~= JSONValue(
+			format(
+				"Unbanned by %s on %s", client.username, DateToday()
+			)
+		);
 
 		server.SavePlayerInfo(username, info);
 
@@ -208,6 +206,98 @@ class IPUnbanCommand : Command {
 		std.file.write(path, ips.join("\n"));
 
 		client.SendMessage("&aIP unbanned");
+	}
+}
+
+class WarnCommand : Command {
+	this() {
+		name = "warn";
+		help = [
+			"&a/warn [user] [reason]",
+			"&eWarns the given user with the given reason"
+		];
+		argumentsRequired = 2;
+		permission        = 0xD0;
+		category          = CommandCategory.Moderation;
+	}
+
+	override void Run(Server server, Client client, string[] args) {
+		auto username = args[0];
+		string reason;
+
+		foreach (ref arg ; args[1 .. $]) {
+			reason ~= arg ~ ' ';
+		}
+		
+		reason = reason.strip();
+
+		JSONValue info;
+
+		try {
+			info = server.GetPlayerInfo(username);
+		}
+		catch (ServerException e) {
+			client.SendMessage(format("&c%s", username));
+			return;
+		}
+
+		info["infractions"].array ~= JSONValue(
+			format(
+				"Warned by %s on %s: %s", client.username, DateToday(), reason
+			)
+		);
+
+		server.SavePlayerInfo(username, info);
+
+		server.SendGlobalMessage(
+			format(
+				"&e%s was warned by %s: %s",username, client.username, reason
+			)
+		);
+	}
+}
+
+class NotesCommand : Command {
+	this() {
+		name = "notes";
+		help = [
+			"&a/notes",
+			"&eShows your notes",
+			"&a/notes [username]",
+			"&eShows the given user's notes"
+		];
+		argumentsRequired = 0;
+		permission        = 0x00;
+		category          = CommandCategory.Moderation;
+	}
+
+	override void Run(Server server, Client client, string[] args) {
+		string username;
+
+		if (args.length == 0) {
+			username = client.username;
+		}
+		else {
+			username = args[0];
+		}
+
+		JSONValue info;
+
+		try {
+			info = server.GetPlayerInfo(username);
+		}
+		catch (ServerException e) {
+			client.SendMessage(format("&c%s", username));
+			return;
+		}
+
+		client.SendMessage(format("&eNotes for user %s", username));
+
+		foreach (ref note ; info["infractions"].array) {
+			string noteString = note.str;
+
+			client.SendMessage(format("  &c%s", noteString));
+		}
 	}
 }
 

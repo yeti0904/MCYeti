@@ -252,6 +252,9 @@ class Client {
 				if ("nickname" !in info) {
 					info["nickname"] = "";
 				}
+				if ("infractions" !in info) {
+					info["infractions"] = cast(JSONValue[]) [];
+				}
 				SaveInfo();
 
 				if (info["banned"].boolean) {
