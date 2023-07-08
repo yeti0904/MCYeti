@@ -32,17 +32,24 @@ void main() {
 		}
 	}
 
-	// create blockDBs for worlds that don't have one
+	// create blockDBs and backup folders for worlds that don't have one
 	string worldsFolder = dirName(thisExePath()) ~ "/worlds/";
 	
 	foreach (entry ; dirEntries(worldsFolder, SpanMode.shallow)) {
 		if (entry.name.extension() == ".ylv") {
 			string name = baseName(entry.name).stripExtension();
-			string dbPath = format("%s/blockdb/%s.db", dirName(thisExePath()), name);
+			string dbPath = format(
+				"%s/blockdb/%s.db", dirName(thisExePath()), name
+			);
 
 			if (!exists(dbPath)) {
 				BlockDB.CreateBlockDB(name);
 			}
+
+			string backupPath = format(
+				"%s/backups/%s", dirName(thisExePath()), name
+			);
+			mkdir(backupPath);
 		}
 	}
 

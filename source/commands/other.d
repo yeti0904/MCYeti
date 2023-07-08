@@ -58,5 +58,7 @@ class AbortCommand : Command {
 		client.markCallback = null;
 		client.markBlock    = 0;
 		client.markInfo     = null;
+
+		client.SendMessage("&eCommand aborted");
 	}
 }

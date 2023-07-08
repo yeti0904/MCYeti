@@ -79,6 +79,7 @@ class CommandManager {
 		LoadCommand(new CopyCommand());
 		LoadCommand(new PasteCommand());
 		LoadCommand(new TpCommand());
+		LoadCommand(new SummonCommand());
 	}
 
 	CommandCategory ToCategory(string str) {

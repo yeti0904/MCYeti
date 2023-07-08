@@ -334,7 +334,7 @@ class TpCommand : Command {
 			"&a/tp [x] [y] [z]",
 			"&eTeleports you to the given coordinates"
 		];
-		argumentsRequired = 0;
+		argumentsRequired = 1;
 		permission        = 0x00;
 		category          = CommandCategory.World;
 	}
@@ -381,5 +381,33 @@ class TpCommand : Command {
 			client.SendMessage("&cInvalid parameters");
 			return;
 		}
+	}
+}
+
+class SummonCommand : Command {
+	this() {
+		name = "summon";
+		help = [
+			"&a/summon [username]",
+			"&eTeleports the given player to your position"
+		];
+		argumentsRequired = 1;
+		permission        = 0xD0;
+		category          = CommandCategory.World;
+	}
+
+	override void Run(Server server, Client client, string[] args) {
+		if (!server.PlayerOnline(args[0])) {
+			client.SendMessage("&cPlayer not online");
+			return;
+		}
+
+		auto other = server.GetPlayer(args[0]);
+		auto cmd   = new TpCommand();
+
+		cmd.Run(server, other, [client.username]);
+
+		other.SendMessage(format("&eYou were summoned by %s", client.username));
+		client.SendMessage("&eSummoned player");
 	}
 }
