@@ -5,6 +5,7 @@ import std.path;
 import std.stdio;
 import std.bitmanip;
 import mcyeti.protocol;
+import mcyeti.util;
 
 struct BlockEntry {
 	string  player;
@@ -34,7 +35,7 @@ class BlockDB {
 		
 		auto file = File(path, "rb");
 
-		if ((file.size < 2) || (file.size() - 2 % blockEntrySize != 0)) {
+		if ((file.size < 2) || (((file.size() - 2) % blockEntrySize) != 0)) {
 			throw new BlockDBException("Invalid BlockDB");
 		}
 	}
@@ -53,9 +54,9 @@ class BlockDB {
 	BlockEntry GetEntry(size_t index) {
 		auto file = Open("rb");
 	
-		file.seek(index * blockEntrySize);
+		file.seek(2 + index * blockEntrySize);
 		
-		auto data = file.rawRead(new ubyte[blockEntrySize])[2 .. $];
+		auto data = file.rawRead(new ubyte[blockEntrySize]);
 
 		BlockEntry ret;
 		ret.player        = data[0 .. 16].FromClassicString(16);
@@ -83,6 +84,7 @@ class BlockDB {
 		ret[24 .. 26] = entry.previousBlock.nativeToBigEndian();
 		ret[26 .. 34] = entry.time.nativeToBigEndian();
 		ret[34 .. 50] = entry.extra.ToClassicString(16);
+
 
 		return ret;
 	}

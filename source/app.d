@@ -5,6 +5,7 @@ import std.path;
 import std.stdio;
 import std.format;
 import core.thread;
+import mcyeti.blockdb;
 import mcyeti.server;
 
 void main() {
@@ -36,13 +37,11 @@ void main() {
 	
 	foreach (entry ; dirEntries(worldsFolder, SpanMode.shallow)) {
 		if (entry.name.extension() == ".ylv") {
-			string dbPath = format(
-				"%s/blockdb/%s.db", dirName(thisExePath()),
-				baseName(entry.name).stripExtension()
-			);
+			string name = baseName(entry.name).stripExtension();
+			string dbPath = format("%s/blockdb/%s.db", dirName(thisExePath()), name);
 
 			if (!exists(dbPath)) {
-				std.file.write(dbPath, []);
+				BlockDB.CreateBlockDB(name);
 			}
 		}
 	}
