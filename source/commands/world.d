@@ -319,6 +319,8 @@ class MainCommand : Command {
 	}
 
 	override void Run(Server server, Client client, string[] args) {
-		server.SendPlayerToWorld(client, server.config.mainLevel);
+		// server.SendPlayerToWorld(client, server.config.mainLevel);
+		auto cmd = new GotoCommand();
+		cmd.Run(server, client, [server.config.mainLevel]);
 	}
 }
