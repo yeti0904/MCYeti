@@ -76,6 +76,8 @@ class CommandManager {
 		LoadCommand(new UndoPlayerCommand());
 		LoadCommand(new WarnCommand());
 		LoadCommand(new NotesCommand());
+		LoadCommand(new CopyCommand());
+		LoadCommand(new PasteCommand());
 	}
 
 	CommandCategory ToCategory(string str) {

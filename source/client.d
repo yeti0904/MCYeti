@@ -23,20 +23,28 @@ import mcyeti.commandManager;
 
 alias MarkCallback = void function(Client, Server, void*);
 
+struct ClipboardItem {
+	ushort x;
+	ushort y;
+	ushort z;
+	ushort block;
+}
+
 class Client {
-	Socket        socket;
-	string        ip;
-	string        username;
-	bool          authenticated;
-	ubyte[]       inBuffer;
-	ubyte[]       outBuffer;
-	World         world;
-	JSONValue     info;
-	Vec3!ushort[] marks;
-	uint          marksWaiting;
-	MarkCallback  markCallback;
-	ushort        markBlock;
-	void*         markInfo;
+	Socket          socket;
+	string          ip;
+	string          username;
+	bool            authenticated;
+	ubyte[]         inBuffer;
+	ubyte[]         outBuffer;
+	World           world;
+	JSONValue       info;
+	Vec3!ushort[]   marks;
+	uint            marksWaiting;
+	MarkCallback    markCallback;
+	ushort          markBlock;
+	void*           markInfo;
+	ClipboardItem[] clipboard;
 	
 	private Vec3!float pos;
 	private Dir3D      direction;    

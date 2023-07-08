@@ -275,6 +275,14 @@ class World {
 		}
 	}
 
+	bool BlockInWorld(ushort x, ushort y, ushort z) {
+		return (
+			(x < size.x) &&
+			(y < size.y) &&
+			(z < size.z)
+		);
+	}
+
 	string GetName() {
 		return name;
 	}
