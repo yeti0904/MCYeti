@@ -1,8 +1,15 @@
 module mcyeti.util;
 
+import std.conv;
 import std.ascii;
 import std.stdio;
 import std.format;
+
+class UtilException : Exception {
+	this(string msg, string file = __FILE__, size_t line = __LINE__) {
+		super(msg, file, line);
+	}
+}
 
 string LowerString(string str) {
 	string ret;
@@ -40,4 +47,41 @@ void Log(string str) {
 	version (Windows) {
 		stdout.flush();
 	}
+}
+
+long StringAsTimespan(string str) {
+	if (str.length == 0) {
+		throw new UtilException("Invalid timespan");
+	}
+
+	long ret;
+	string num = str[0 .. $ - 1];
+
+	try {
+		ret = num.parse!int();
+	}
+	catch (ConvException) {
+		throw new UtilException("Invalid timespan");
+	}
+
+	switch (str[$ - 1]) {
+		case 's': break;
+		case 'm': {
+			ret *= 60;
+			break;
+		}
+		case 'h': {
+			ret *= 3600;
+			break;
+		}
+		case 'd': {
+			ret *= 86400;
+			break;
+		}
+		default: {
+			throw new UtilException("Invalid timespan");
+		}
+	}
+
+	return ret;
 }

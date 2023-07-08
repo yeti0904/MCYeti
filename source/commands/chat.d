@@ -275,3 +275,26 @@ class ShortNameCommand : Command {
 		cmd.Run(server, client, [client.username, args[0]]);
 	}
 }
+
+class ColoursCommand : Command {
+	this() {
+		name = "colours";
+		help = [
+			"&a/colours",
+			"&eShows all colours"
+		];
+		argumentsRequired = 0;
+		permission        = 0x00;
+		category          = CommandCategory.Chat;
+	}
+
+	override void Run(Server server, Client client, string[] args) {
+		auto colours = server.GetChatColours();
+
+		client.SendMessage("&eAvailable colours:");
+
+		foreach (key, value ; colours) {
+			client.SendMessage(format("  &%c%s&f = %c", value, key, value));
+		}
+	}
+}

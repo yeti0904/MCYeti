@@ -5,14 +5,18 @@ import std.file;
 import std.json;
 import std.path;
 import std.array;
+import std.range;
 import std.format;
 import std.string;
+import std.datetime;
 import std.algorithm;
 import core.stdc.stdlib;
+import mcyeti.util;
 import mcyeti.types;
 import mcyeti.world;
 import mcyeti.client;
 import mcyeti.server;
+import mcyeti.blockdb;
 import mcyeti.commandManager;
 
 class ShutdownCommand : Command {
@@ -236,5 +240,73 @@ class CmdSetCommand : Command {
 		client.SendMessage(
 			format("&f%s &eis now usable by &f%s+", args[0], args[1])
 		);
+	}
+}
+
+class UndoPlayerCommand : Command {
+	this() {
+		name = "undoplayer";
+		help = [
+			"&a/undoplayer [username] <timespan>",
+			"&eUndos all of the given player's changes on this map"
+		];
+		argumentsRequired = 1;
+		permission        = 0xD0;
+		category          = CommandCategory.Moderation;
+	}
+
+	override void Run(Server server, Client client, string[] args) {
+		if (client.world is null) {
+			return;
+		}
+
+		auto blockdb = new BlockDB(client.world.GetName());
+		auto time    = Clock.currTime().toUnixTime();
+		long timespan;
+		bool doTimespan;
+
+		if (args.length > 1) {
+			doTimespan = true;
+			
+			try {
+				timespan = StringAsTimespan(args[1]);
+			}
+			catch (UtilException e) {
+				client.SendMessage(format("&c%s", e.msg));
+				return;
+			}
+		}
+
+		foreach (i ; iota(0, blockdb.GetEntryAmount()).retro()) {
+			auto entry = blockdb.GetEntry(i);
+
+			if (entry.player != args[0]) {
+				continue;
+			}
+
+			long timeDifference = time - entry.time;
+
+			if (doTimespan && (timeDifference > timespan)) {
+				continue;
+			}
+
+			client.world.SetBlock(
+				entry.x, entry.y, entry.z, cast(ubyte) entry.previousBlock
+			);
+
+			auto undoEntry = BlockEntry(
+				client.username,
+				entry.x,
+				entry.y,
+				entry.z,
+				client.world.GetBlock(entry.x, entry.y, entry.z),
+				entry.blockType,
+				time,
+				"(Undone Other)"
+			);
+			blockdb.AppendEntry(undoEntry);
+		}
+
+		client.SendMessage("&cUndone player changes");
 	}
 }
