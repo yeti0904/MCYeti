@@ -278,3 +278,26 @@ class PlayersCommand : Command {
 		);
 	}
 }
+
+class RulesCommand : Command {
+	this() {
+		name = "rules";
+		help = [
+			"&a/rules",
+			"&eShows you the server rules"
+		];
+		argumentsRequired = 0;
+		permission        = 0x00;
+		category          = CommandCategory.Info;
+	}
+
+	override void Run(Server server, Client client, string[] args) {
+		string rulesPath = dirName(thisExePath()) ~ "/text/rules.txt";
+
+		client.SendMessage("&eServer rules:");
+
+		foreach (ref line ; readText(rulesPath).split("\n")) {
+			client.SendMessage(format("&e%s", line));
+		}
+	}
+}

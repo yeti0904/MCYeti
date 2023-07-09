@@ -20,3 +20,7 @@ properties
 worlds
 blockdb
 blockdb/*
+backups/*
+backups
+text
+text/*

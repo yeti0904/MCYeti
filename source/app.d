@@ -14,10 +14,12 @@ void main() {
 		"players",
 		"properties",
 		"blockdb",
-		"backups"
+		"backups",
+		"text"
 	];
 	string[] files = [
-		"banned_ips.txt"
+		"banned_ips.txt",
+		"text/rules.txt"
 	];
 
 	foreach (ref folder ; folders) {
@@ -28,7 +30,14 @@ void main() {
 
 	foreach (ref file ; files) {
 		if (!exists(file)) {
-			std.file.write(dirName(thisExePath()) ~ '/' ~ file, "");
+			string path     = dirName(thisExePath()) ~ '/' ~ file;
+			string contents = "";
+
+			if (file == "text/rules.txt") {
+				contents = "No rules entered yet";
+			}
+			
+			std.file.write(path, contents);
 		}
 	}
 
@@ -49,7 +58,10 @@ void main() {
 			string backupPath = format(
 				"%s/backups/%s", dirName(thisExePath()), name
 			);
-			mkdir(backupPath);
+
+			if (!exists(backupPath)) {
+				mkdir(backupPath);
+			}
 		}
 	}
 
