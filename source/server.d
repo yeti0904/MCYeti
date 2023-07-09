@@ -20,6 +20,15 @@ import mcyeti.client;
 import mcyeti.protocol;
 import mcyeti.commandManager;
 
+alias ScheduledTaskFunction = void function(Server);
+
+struct ScheduledTask {
+	string                name;
+	uint                  tickDelay;
+	bool                  active;
+	ScheduledTaskFunction func;
+}
+
 struct ServerConfig {
 	string ip;
 	ushort port;
@@ -39,19 +48,20 @@ class ServerException : Exception {
 }
 
 class Server {
-	bool           running;
-	ServerConfig   config;
-	Socket         socket;
-	SocketSet      serverSet;
-	SocketSet      clientSet;
-	Client[]       clients;
-	ulong          ticks;
-	StopWatch      uptime;
-	World[]        worlds;
-	CommandManager commands;
-	string         salt;
-	JSONValue      ranks;
-	JSONValue      cmdPermissions;
+	bool            running;
+	ServerConfig    config;
+	Socket          socket;
+	SocketSet       serverSet;
+	SocketSet       clientSet;
+	Client[]        clients;
+	ulong           ticks;
+	StopWatch       uptime;
+	World[]         worlds;
+	CommandManager  commands;
+	string          salt;
+	JSONValue       ranks;
+	JSONValue       cmdPermissions;
+	ScheduledTask[] tasks;
 
 	this() {
 		commands = new CommandManager();
@@ -204,6 +214,35 @@ class Server {
 		uptime.start();
 
 		Log("Listening at %s:%d", config.ip, config.port);
+	}
+
+	void AddScheduleTask(
+		string name, uint tickDelay, bool active, ScheduledTaskFunction func
+	) {
+		auto task  = ScheduledTask(name, tickDelay, active, func);
+		tasks     ~= task;
+	}
+
+	void StartScheduledTask(string name) {
+		foreach (ref task ; tasks) {
+			if (task.name == name) {
+				task.active = true;
+				return;
+			}
+		}
+
+		throw new ServerException("No such task");
+	}
+
+	void StopScheduledTask(string name) {
+		foreach (ref task ; tasks) {
+			if (task.name == name) {
+				task.active = false;
+				return;
+			}
+		}
+
+		throw new ServerException("No such task");
 	}
 
 	char[string] GetChatColours() {

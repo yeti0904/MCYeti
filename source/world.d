@@ -77,14 +77,17 @@ class WorldException : Exception {
 class World {  
 	Vec3!ushort    spawn;
 	Client[256]    clients;
-	private ubyte  permissionBuild;
-	private ubyte  permissionVisit;
-
-	private string name;
-	private ubyte[] blocks;
+	
+	private ubyte       permissionBuild;
+	private ubyte       permissionVisit;
+	private string      name;
+	private ubyte[]     blocks;
 	private Vec3!ushort size;
-	private ushort formatVersion;
-	private bool changed = false;
+	private ushort      formatVersion;
+	private bool        changed = false;
+	bool                doBackups;
+
+	static ushort latestVersion = 2;
 
 	this(Vec3!ushort psize, string pname, string generator = "flat") {
 		size   = psize;
@@ -101,7 +104,7 @@ class World {
 			clients[i] = null;
 		}
 
-		formatVersion = 1;
+		formatVersion = 2;
 
 		switch (generator) {
 			case "flat": {
@@ -142,8 +145,15 @@ class World {
 		permissionBuild = data[12];
 		permissionVisit = data[13];
 		formatVersion   = data[14 .. 16].bigEndianToNative!ushort();
+
+		if (formatVersion >= 2) {
+			doBackups = data[16] > 0? true : false;
+		}
+		else {
+			doBackups = true;
+		}
 		
-		if (formatVersion != 0 && formatVersion != 1) {
+		if (formatVersion > latestVersion) {
 			throw new WorldException("Unsupported formatVersion");
 		}
 
@@ -152,6 +162,22 @@ class World {
 		if (size.x * size.y * size.z != blocks.length) {
 			throw new WorldException("Block array size does not match volume of map");
 		}
+	}
+
+	static bool WorldDoesBackups(string name) {
+		string worldPath = dirName(thisExePath()) ~ "/worlds/" ~ name ~ ".ylv";
+		auto   file      = File(worldPath, "rb");
+
+		file.seek(14);
+		auto fileFormatVersion = file.rawRead(new ubyte[2]).bigEndianToNative!ushort();
+
+		if (fileFormatVersion < 2) {
+			return true;
+		}
+
+		file.seek(16);
+
+		return file.rawRead(new ubyte[1])[0] > 0? true : false;
 	}
 
 	void Save() {
@@ -169,11 +195,14 @@ class World {
 			spawn.x.nativeToBigEndian() ~
 			spawn.y.nativeToBigEndian() ~
 			spawn.z.nativeToBigEndian() ~
-				[
+			[
 				permissionBuild,
 				permissionVisit
 			] ~
-			formatVersion.nativeToBigEndian();
+			latestVersion.nativeToBigEndian() ~
+			[
+				doBackups? 1 : 0
+			];
 
 			while (metadata.length < 512) {
 				metadata ~= 0;
