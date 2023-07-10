@@ -13,11 +13,14 @@ import std.net.curl;
 import std.algorithm;
 import std.datetime.stopwatch;
 import csprng.system;
+import mcyeti.ping;
 import mcyeti.util;
 import mcyeti.types;
 import mcyeti.world;
 import mcyeti.client;
+import mcyeti.autosave;
 import mcyeti.protocol;
+import mcyeti.heartbeat;
 import mcyeti.commandManager;
 
 alias ScheduledTaskFunction = void function(Server);
@@ -154,42 +157,17 @@ class Server {
 		
 		cmdPermissions = readText(cmdPermissionsPath).parseJSON();
 		ReloadCmdPermissions();
+
+		// add tasks
+		AddScheduleTask("heartbeat", 750, true, &HeartbeatTask);
+		AddScheduleTask("autosave",  750, true, &AutosaveTask);
+		AddScheduleTask("ping",      25,  true, &PingTask);
 	}
 
 	~this() {
 		if (socket) {
 			socket.close();
 		}
-	}
-
-	private void RunHeartbeat() {
-		string url = format(
-		    "%s?name=%s&port=%d&users=%d&max=%d&salt=%s&public=%s&software=%s",
-		    config.heartbeatURL,
-		    encodeComponent(config.name),
-		    config.port,
-		    GetConnectedIPs(),
-		    config.maxPlayers,
-		    salt,
-		    config.publicServer? "true" : "false",
-		    "MCYeti"
-		);
-
-		static string oldServerURL;
-		string        serverURL;
-
-		try {
-			serverURL = cast(string) get(url);
-		}
-		catch (CurlException e) {
-			Log("Error in heartbeat: %s", e.msg);
-		}
-
-		if (serverURL != oldServerURL) {
-			Log("Server URL: %s", serverURL);
-		}
-
-		oldServerURL = serverURL;
 	}
 
 	void Init() {
@@ -429,6 +407,12 @@ class Server {
 		throw new ServerException("No such world");
 	}
 
+	void SaveAll() {
+		foreach (ref world ; worlds) {
+			world.Save();
+		}
+	}
+
 	bool PlayerOnline(string username) {
 		foreach (ref client ; clients) {
 			if (client.authenticated && (client.username == username)) {
@@ -537,12 +521,6 @@ class Server {
 		throw new ServerException("No such world");
 	}
 
-	void SaveAll() {
-		foreach (ref world ; worlds) {
-			world.Save();
-		}
-	}
-
 	JSONValue GetPlayerInfo(string username) {
 		string infoPath = format(
 			"%s/players/%s.json",
@@ -576,24 +554,6 @@ class Server {
 	}
 
 	void Update() {
-		if (ticks % 25 == 0) {
-			foreach (i, ref client ; clients) {
-				auto packet = new S2C_Ping();
-
-				client.outBuffer ~= packet.CreateData();
-				if (!client.SendData(this)) {
-					Kick(client, "");
-					Update();
-					return;
-				}
-			}
-		}
-
-		if (ticks % 750 == 0) {
-			RunHeartbeat();
-			SaveAll();
-		}
-
 		foreach (ref task ; tasks) {
 			if (task.active && (ticks % task.tickDelay == 0)) {
 				task.func(this);
