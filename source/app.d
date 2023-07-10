@@ -4,9 +4,13 @@ import std.file;
 import std.path;
 import std.stdio;
 import std.format;
+import std.datetime.stopwatch;
 import core.thread;
 import mcyeti.blockdb;
 import mcyeti.server;
+
+const int TPS = 20;
+const int TICK_INTERVAL = 1000 / TPS;
 
 void main() {
 	string[] folders = [
@@ -70,8 +74,11 @@ void main() {
 	server.Init();
 
 	while (server.running) {
+		auto sw = StopWatch(AutoStart.yes);
 		server.Update();
-
-		Thread.sleep(dur!"msecs"(1000 / 50));
+		long tookMillis = sw.peek().total!"msecs";
+		if (tookMillis <= TICK_INTERVAL) {
+			Thread.sleep(dur!"msecs"(TICK_INTERVAL - tookMillis));
+		}
 	}
 }
