@@ -593,6 +593,12 @@ class Server {
 			RunHeartbeat();
 			SaveAll();
 		}
+
+		foreach (ref task ; tasks) {
+			if (task.active && (ticks % task.tickDelay == 0)) {
+				task.func(this);
+			}
+		}
 	
 		serverSet.reset();
 		clientSet.reset();

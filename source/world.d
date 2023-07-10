@@ -169,7 +169,7 @@ class World {
 		auto   file      = File(worldPath, "rb");
 
 		file.seek(14);
-		auto fileFormatVersion = file.rawRead(new ubyte[2]).bigEndianToNative!ushort();
+		auto fileFormatVersion = file.rawRead(new ubyte[2])[0 .. 2].bigEndianToNative!ushort();
 
 		if (fileFormatVersion < 2) {
 			return true;
@@ -201,7 +201,7 @@ class World {
 			] ~
 			latestVersion.nativeToBigEndian() ~
 			[
-				doBackups? 1 : 0
+				doBackups? cast(ubyte) 1 : cast(ubyte) 0
 			];
 
 			while (metadata.length < 512) {
