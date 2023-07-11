@@ -211,6 +211,16 @@ class Client {
 			return;
 		}
 
+		if (info.type != JSONType.null_) {
+			auto time = Clock.currTime().toUnixTime();
+
+			if (info["muted"].boolean && (info["muteTime"].integer - time < 0)) {
+				SendMessage("&eYou are no longer muted");
+				info["muted"] = false;
+				SaveInfo();
+			}
+		}
+
 		switch (inBuffer[0]) {
 			case C2S_Identification.pid: {
 				auto packet = new C2S_Identification();
@@ -278,10 +288,18 @@ class Client {
 				if ("infractions" !in info) {
 					info["infractions"] = cast(JSONValue[]) [];
 				}
+				if ("muted" !in info) {
+					info["muted"] = false;
+				}
 				SaveInfo();
 
 				if (info["banned"].boolean) {
 					server.Kick(this, "You're banned!");
+					return;
+				}
+
+				if (info["muted"].boolean) {
+					SendMessage("&eYou are muted");
 					return;
 				}
 
@@ -446,6 +464,11 @@ class Client {
 
 				packet.FromData(inBuffer);
 				inBuffer = inBuffer[packet.GetSize() .. $];
+
+				if (info["muted"].boolean) {
+					SendMessage("&eYou are muted");
+					return;
+				}
 
 				string colourCodes = "0123456789abcdef";
 				char[] msg         = cast(char[]) packet.message;

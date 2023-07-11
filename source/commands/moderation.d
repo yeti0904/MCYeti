@@ -301,6 +301,146 @@ class NotesCommand : Command {
 	}
 }
 
+class MuteCommand : Command {
+	this() {
+		name = "mute";
+		help = [
+			"&a/mute [username] <reason>",
+			"&eMutes the given player"
+		];
+		argumentsRequired = 1;
+		permission        = 0xD0;
+		category          = CommandCategory.Moderation;
+	}
+
+	override void Run(Server server, Client client, string[] args) {
+		JSONValue info;
+
+		try {
+			info = server.GetPlayerInfo(args[0]);
+		}
+		catch (ServerException e) {
+			client.SendMessage(format("&c%s", e.msg));
+			return;
+		}
+
+		string reason = args[1 .. $].join(" ").strip();
+
+		info["muted"]    = true;
+		info["muteTime"] = (cast(long) 1 << 63) - 1;
+		
+		info["infractions"].array ~= JSONValue(
+			format(
+				"Muted by %s on %s: %s", client.username, DateToday(), reason
+			)
+		);
+
+		server.SavePlayerInfo(args[0], info);
+
+		if (server.PlayerOnline(args[0])) {
+			auto player = server.GetPlayer(args[0]);
+
+			player.info = info;
+			player.SendMessage("&eYou have been muted");
+		}
+
+		client.SendMessage("&ePlayer muted");
+	}
+}
+
+class TempMuteCommand : Command {
+	this() {
+		name = "tempmute";
+		help = [
+			"&a/tempmute [username] [time] <reason>",
+			"&eMutes the given player for the given timespan"
+		];
+		argumentsRequired = 2;
+		permission        = 0xD0;
+		category          = CommandCategory.Moderation;
+	}
+
+	override void Run(Server server, Client client, string[] args) {
+		JSONValue info;
+
+		try {
+			info = server.GetPlayerInfo(args[0]);
+		}
+		catch (ServerException e) {
+			client.SendMessage(format("&c%s", e.msg));
+			return;
+		}
+
+		string reason = args[2 .. $].join(" ").strip();
+
+		auto time = Clock.currTime().toUnixTime();
+
+		info["muted"]    = true;
+		info["muteTime"] = time + StringAsTimespan(args[1]);
+		
+		info["infractions"].array ~= JSONValue(
+			format(
+				"Muted by %s on %s: %s", client.username, DateToday(), reason
+			)
+		);
+
+		server.SavePlayerInfo(args[0], info);
+
+		if (server.PlayerOnline(args[0])) {
+			auto player = server.GetPlayer(args[0]);
+
+			player.info = info;
+			player.SendMessage("&eYou have been muted");
+		}
+
+		client.SendMessage("&ePlayer muted");
+	}
+}
+
+class UnmuteCommand : Command {
+	this() {
+		name = "unmute";
+		help = [
+			"&a/unmute [username]",
+			"&eUnmutes the given player"
+		];
+		argumentsRequired = 1;
+		permission        = 0xD0;
+		category          = CommandCategory.Moderation;
+	}
+
+	override void Run(Server server, Client client, string[] args) {
+		JSONValue info;
+
+		try {
+			info = server.GetPlayerInfo(args[0]);
+		}
+		catch (ServerException e) {
+			client.SendMessage(format("&c%s", e.msg));
+			return;
+		}
+
+		info["muted"] = false;
+		
+		info["infractions"].array ~= JSONValue(
+			format(
+				"Unmuted by %s on %s", client.username, DateToday()
+			)
+		);
+
+		server.SavePlayerInfo(args[0], info);
+
+		if (server.PlayerOnline(args[0])) {
+			auto player = server.GetPlayer(args[0]);
+
+			player.info = info;
+			player.SendMessage("&eYou have been unmuted");
+		}
+
+		client.SendMessage("&ePlayer unmuted");
+	}
+}
+
 class CmdSetCommand : Command {
 	this() {
 		name = "cmdset";
@@ -400,3 +540,4 @@ class UndoPlayerCommand : Command {
 		client.SendMessage("&cUndone player changes");
 	}
 }
+
