@@ -167,9 +167,9 @@ class Server {
 		ReloadCmdPermissions();
 
 		// add tasks
-		AddScheduleTask("heartbeat", 750, true, &HeartbeatTask);
-		AddScheduleTask("autosave",  750, true, &AutosaveTask);
-		AddScheduleTask("ping",      25,  true, &PingTask);
+		AddScheduleTask("heartbeat", 720, true, &HeartbeatTask);
+		AddScheduleTask("autosave",  720, true, &AutosaveTask);
+		AddScheduleTask("ping",      10,  true, &PingTask);
 	}
 
 	~this() {
