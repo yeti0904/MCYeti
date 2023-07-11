@@ -3,6 +3,7 @@ module mcyeti.heartbeat;
 import std.uri;
 import std.format;
 import std.net.curl;
+import std.algorithm;
 import mcyeti.util;
 import mcyeti.server;
 
@@ -31,6 +32,10 @@ void HeartbeatTask(Server server) {
 
 	if (serverURL != oldServerURL) {
 		Log("Server URL: %s", serverURL);
+	}
+
+	if (!serverURL.startsWith("http")) {
+		Log("Heartbeat error: %s", serverURL);
 	}
 
 	oldServerURL = serverURL;
