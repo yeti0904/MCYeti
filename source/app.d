@@ -9,8 +9,8 @@ import core.thread;
 import mcyeti.blockdb;
 import mcyeti.server;
 
-const int TPS = 20;
-const int TICK_INTERVAL = 1000 / TPS;
+const int tps          = 20;
+const int tickInterval = 1000 / tps;
 
 void main() {
 	string[] folders = [
@@ -75,10 +75,13 @@ void main() {
 
 	while (server.running) {
 		auto sw = StopWatch(AutoStart.yes);
+		
 		server.Update();
+		
 		long tookMillis = sw.peek().total!"msecs";
-		if (tookMillis <= TICK_INTERVAL) {
-			Thread.sleep(dur!"msecs"(TICK_INTERVAL - tookMillis));
+		
+		if (tookMillis <= tickInterval) {
+			Thread.sleep(dur!"msecs"(tickInterval - tookMillis));
 		}
 	}
 }
