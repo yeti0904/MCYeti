@@ -298,3 +298,21 @@ class ColoursCommand : Command {
 		}
 	}
 }
+
+class SayCommand : Command {
+	this() {
+		name = "say";
+		help = [
+			"&a/say [message]",
+			"&eBroadcasts a global message to everyone in the server"
+		];
+		argumentsRequired = 1;
+		permission        = 0xD0;
+		category          = CommandCategory.Chat;
+	}
+
+	override void Run(Server server, Client client, string[] args) {
+		string msg = args.join(" ").strip();
+		server.SendGlobalMessage(msg);
+	}
+}

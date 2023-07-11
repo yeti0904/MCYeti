@@ -84,6 +84,7 @@ class CommandManager {
 		LoadCommand(new MuteCommand());
 		LoadCommand(new TempMuteCommand());
 		LoadCommand(new UnmuteCommand());
+		LoadCommand(new SayCommand());
 	}
 
 	CommandCategory ToCategory(string str) {
