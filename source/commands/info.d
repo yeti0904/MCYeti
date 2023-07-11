@@ -44,11 +44,14 @@ class HelpCommand : Command {
 					"&e%d commands available", server.commands.commands.length
 				)
 			);*/
-			client.SendMessage("&aAll categories:");
+			client.SendMessage("&eAll categories:");
 
 			for (auto i = CommandCategory.Info; i < CommandCategory.End; ++ i) {
-				client.SendMessage(format("%s", cast(CommandCategory) i));
+				client.SendMessage(format("  %s", cast(CommandCategory) i));
 			}
+
+			client.SendMessage("&eUse /help category [category] for more info");
+			client.SendMessage("&eAlso use /help help");
 		}
 		else if (args[0] == "category") {
 			if (args.length < 2) {

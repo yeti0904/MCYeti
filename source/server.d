@@ -12,6 +12,7 @@ import std.datetime;
 import std.net.curl;
 import std.algorithm;
 import std.datetime.stopwatch;
+import core.stdc.stdlib;
 import csprng.system;
 import mcyeti.ping;
 import mcyeti.util;
@@ -91,13 +92,20 @@ class Server {
 		string ranksPath = dirName(thisExePath()) ~ "/properties/ranks.json";
 
 		ranks              = parseJSON("{}");
-		ranks["guest"]     = 0x00;
-		ranks["moderator"] = 0xD0;
-		ranks["admin"]     = 0xE0;
-		ranks["owner"]     = 0xF0;
+		ranks["guest"]     = parseJSON("{\"permission\": 0}");
+		ranks["moderator"] = parseJSON("{\"permission\": 208}"); // 0xD0
+		ranks["admin"]     = parseJSON("{\"permission\": 224}"); // 0xE0
+		ranks["owner"]     = parseJSON("{\"permission\": 240}"); // 0xF0
 
 		if (exists(ranksPath)) {
 			ranks = parseJSON(readText(ranksPath));
+
+			foreach (key, value ; ranks.object) {
+				if (value.type != JSONType.object) {
+					stderr.writeln("properties/ranks.json is outdated, please delete it");
+					exit(1);
+				}
+			}
 		}
 		else {
 			std.file.write(ranksPath, ranks.toPrettyString());
@@ -320,12 +328,12 @@ class Server {
 			throw new ServerException("No such rank");
 		}
 
-		return cast(ubyte) ranks[name].integer;
+		return cast(ubyte) ranks[name].object["permission"].integer;
 	}
 
 	string GetRankName(ubyte id) {
 		foreach (key, value ; ranks.object) {
-			if (value.integer == id) {
+			if (value.object["permission"].integer == id) {
 				return key;
 			}
 		}
