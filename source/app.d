@@ -9,7 +9,7 @@ import core.thread;
 import mcyeti.blockdb;
 import mcyeti.server;
 
-const int tps          = 20;
+const int tps          = 50;
 const int tickInterval = 1000 / tps;
 
 void main() {
