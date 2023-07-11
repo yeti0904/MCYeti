@@ -1,6 +1,8 @@
 module mcyeti.util;
 
 import std.conv;
+import std.file;
+import std.path;
 import std.ascii;
 import std.stdio;
 import std.format;
@@ -35,11 +37,18 @@ string BytesToString(ubyte[] bytes) {
 }
 
 void Log(Char, A...)(in Char[] fmt, A args) {
-	writefln(fmt, args);
+	auto str = format(fmt, args);
+
+	writeln(str);
 
 	version (Windows) {
 		stdout.flush();
 	}
+
+	auto logsPath = dirName(thisExePath()) ~ "/logs/" ~ DateToday(true) ~ ".log";
+	auto logFile  = File(logsPath, "a");
+
+	logFile.writeln(str);
 }
 
 void Log(string str) {
@@ -48,6 +57,11 @@ void Log(string str) {
 	version (Windows) {
 		stdout.flush();
 	}
+
+	auto logsPath = dirName(thisExePath()) ~ "/logs/" ~ DateToday(true) ~ ".log";
+	auto logFile  = File(logsPath, "a");
+
+	logFile.writeln(str);
 }
 
 long StringAsTimespan(string str) {
@@ -87,7 +101,13 @@ long StringAsTimespan(string str) {
 	return ret;
 }
 
-string DateToday() {
+string DateToday(bool dashes = false) {
 	auto time = Clock.currTime();
-	return format("%d/%d/%d", time.day, time.month, time.year);
+
+	if (dashes) {
+		return format("%d-%d-%d", time.day, time.month, time.year);
+	}
+	else {
+		return format("%d/%d/%d", time.day, time.month, time.year);
+	}
 }

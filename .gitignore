@@ -24,3 +24,5 @@ backups/*
 backups
 text
 text/*
+logs
+logs/*

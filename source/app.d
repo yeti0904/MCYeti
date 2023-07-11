@@ -19,7 +19,8 @@ void main() {
 		"properties",
 		"blockdb",
 		"backups",
-		"text"
+		"text",
+		"logs"
 	];
 	string[] files = [
 		"banned_ips.txt",

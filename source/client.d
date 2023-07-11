@@ -487,6 +487,8 @@ class Client {
 				}
 
 				if (packet.message[0] == '/') {
+					Log("%s used %s", username, packet.message);
+				
 					auto parts = packet.message[1 .. $].split!isWhite();
 
 					if (parts.length == 0) {
