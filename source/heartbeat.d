@@ -4,6 +4,7 @@ import std.uri;
 import std.format;
 import std.net.curl;
 import std.algorithm;
+import mcyeti.app;
 import mcyeti.util;
 import mcyeti.server;
 
@@ -17,7 +18,7 @@ void HeartbeatTask(Server server) {
 	    server.config.maxPlayers,
 	    server.salt,
 	    server.config.publicServer? "true" : "false",
-	    "MCYeti"
+	    appVersion
 	);
 
 	static string oldServerURL;

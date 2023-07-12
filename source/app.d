@@ -12,6 +12,8 @@ import mcyeti.server;
 const int tps          = 50;
 const int tickInterval = 1000 / tps;
 
+const string appVersion = "MCYeti Pre-release";
+
 void main() {
 	string[] folders = [
 		"worlds",
