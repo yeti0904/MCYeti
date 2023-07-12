@@ -12,7 +12,11 @@ import mcyeti.server;
 const int tps          = 50;
 const int tickInterval = 1000 / tps;
 
-const string appVersion = "MCYeti Pre-release";
+const string appVersion      = "MCYeti Pre-release";
+const string[] appDevelopers = [
+	"MESYETI",
+	"deewend"
+];
 
 void main() {
 	string[] folders = [

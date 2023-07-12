@@ -9,6 +9,7 @@ import std.format;
 import std.string;
 import std.algorithm;
 import core.stdc.stdlib;
+import mcyeti.app;
 import mcyeti.types;
 import mcyeti.world;
 import mcyeti.client;
@@ -170,6 +171,10 @@ class InfoCommand : Command {
 
 		if (server.config.owner == username) {
 			client.SendMessage("  &aPlayer is the server owner");
+		}
+
+		if (appDevelopers.canFind(username)) {
+			client.SendMessage("  &aPlayer is an MCYeti developer");
 		}
 	}
 }
