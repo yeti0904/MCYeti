@@ -4,6 +4,7 @@ import std.uri;
 import std.file;
 import std.json;
 import std.path;
+import std.uuid;
 import std.array;
 import std.stdio;
 import std.format;
@@ -34,6 +35,7 @@ struct ScheduledTask {
 }
 
 struct ServerConfig {
+	UUID   serverID;
 	string ip;
 	ushort port;
 	string heartbeatURL;
@@ -71,6 +73,7 @@ class Server {
 		commands = new CommandManager();
 
 		running             = true;
+		config.serverID     = randomUUID();
 		config.ip           = "0.0.0.0";
 		config.port         = 25565;
 		config.heartbeatURL = "https://www.classicube.net/server/heartbeat";
@@ -83,10 +86,13 @@ class Server {
 		string configPath = dirName(thisExePath()) ~ "/properties/server.json";
 		
 		if (exists(configPath)) {
-			LoadConfig();
+			if (LoadConfig()) {
+				// returns true if applied default values should be immediately saved to disk
+				SaveConfig();
+			}
 		}
 		else {
-			std.file.write(configPath, ConfigAsJSON().toPrettyString());
+			SaveConfig();
 		}
 
 		string ranksPath = dirName(thisExePath()) ~ "/properties/ranks.json";
@@ -257,6 +263,7 @@ class Server {
 	JSONValue ConfigAsJSON() {
 		JSONValue ret = parseJSON("{}");
 
+		ret["serverID"]     = config.serverID.toString();
 		ret["ip"]           = config.ip;
 		ret["port"]         = cast(int) config.port;
 		ret["heartbeatURL"] = config.heartbeatURL;
@@ -270,7 +277,8 @@ class Server {
 		return ret;
 	}
 	
-	void LoadConfig() {
+	bool LoadConfig() {
+		bool shouldSave = false;
 		string path = dirName(thisExePath()) ~ "/properties/server.json";
 		auto   json = readText(path).parseJSON();
 
@@ -287,6 +295,14 @@ class Server {
 		if ("owner" in json) {
 			config.owner = json["owner"].str;
 		}
+
+		if ("serverID" in json) {
+			config.serverID = UUID(json["serverID"].str);
+		} else {
+			shouldSave = true;
+		}
+
+		return shouldSave;
 	}
 
 	void SaveConfig() {
