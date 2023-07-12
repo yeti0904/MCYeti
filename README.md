@@ -1,4 +1,4 @@
-<p align="center"><img width="300px" src="res/logo.png"></p>
+<p align="center"><img width="300px" src="img/logo.png"></p>
 <p align="center">Minecraft Classic server software</p>
 
 ## Build
