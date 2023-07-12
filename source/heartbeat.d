@@ -18,7 +18,7 @@ void HeartbeatTask(Server server) {
 	    server.config.maxPlayers,
 	    server.salt,
 	    server.config.publicServer? "true" : "false",
-	    appVersion
+	    encodeComponent(appVersion)
 	);
 
 	static string oldServerURL;
