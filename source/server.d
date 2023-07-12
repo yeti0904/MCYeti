@@ -15,6 +15,7 @@ import std.algorithm;
 import std.datetime.stopwatch;
 import core.stdc.stdlib;
 import csprng.system;
+import mcyeti.app;
 import mcyeti.ping;
 import mcyeti.util;
 import mcyeti.types;
@@ -152,13 +153,13 @@ class Server {
 		clientSet = new SocketSet();
 
 		if (WorldExists("main")) {
-			worlds ~= new World("main");
-			worlds[$ - 1].Save();
+			worlds ~= new World(this, "main");
+			worlds[$ - 1].Save(this);
 		}
 		else {
 			worlds ~= new World(Vec3!ushort(64, 64, 64), "main");
 			worlds[$ - 1].GenerateFlat();
-			worlds[$ - 1].Save();
+			worlds[$ - 1].Save(this);
 		}
 
 		// load command permission overrides
@@ -173,15 +174,9 @@ class Server {
 		ReloadCmdPermissions();
 
 		// add tasks
-		AddScheduleTask("heartbeat", 720, true, &HeartbeatTask);
-		AddScheduleTask("autosave",  720, true, &AutosaveTask);
-		AddScheduleTask("ping",      10,  true, &PingTask);
-	}
-
-	~this() {
-		if (socket) {
-			socket.close();
-		}
+		AddScheduleTask("heartbeat", tps * 30, true, &HeartbeatTask);
+		AddScheduleTask("autosave",  tps * 60, true, &AutosaveTask);
+		AddScheduleTask("ping",      10,  true, &PingTask); // todo probably should depend on tps
 	}
 
 	void Init() {
@@ -395,8 +390,8 @@ class Server {
 		}
 
 		try {
-			worlds ~= new World(name);
-			worlds[$ - 1].Save();
+			worlds ~= new World(this, name);
+			worlds[$ - 1].Save(this);
 		}
 		catch (WorldException e) {
 			throw new ServerException(e.msg);
@@ -433,7 +428,7 @@ class Server {
 
 	void SaveAll() {
 		foreach (ref world ; worlds) {
-			world.Save();
+			world.Save(this);
 		}
 	}
 
