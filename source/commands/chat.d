@@ -198,7 +198,7 @@ class NickCommand : Command {
 		}
 
 		nick = nick.strip();
-			
+
 		if (nick.length > 30) {
 			client.SendMessage("&eNickname must be 30 or less letters");
 			return;
@@ -314,5 +314,30 @@ class SayCommand : Command {
 	override void Run(Server server, Client client, string[] args) {
 		string msg = args.join(" ").strip();
 		server.SendGlobalMessage(msg);
+	}
+}
+
+class HighFiveCommand : Command {
+	this() {
+		name = "highfive";
+		help = [
+			"&a/highfive [player]",
+			"&eHighfives a player"
+		];
+		argumentsRequired = 1;
+		permission        = 0x00;
+		category          = CommandCategory.Chat;
+	}
+
+	override void Run(Server server, Client client, string[] args) {
+		if (!server.PlayerOnline(args[0])) {
+			client.SendMessage("&cPlayer not online");
+			return;
+		}
+
+		auto player = server.GetPlayer(args[0]);
+		server.SendGlobalMessage(
+			format("%s&e highfived %s", client.GetDisplayName(), player.GetDisplayName())
+		);
 	}
 }
