@@ -1,12 +1,15 @@
 module mcyeti.world;
 
+import std.conv;
 import std.file;
 import std.math;
 import std.path;
+import std.uuid;
 import std.stdio;
 import std.random;
 import std.bitmanip;
 import std.algorithm;
+import std.datetime.systime;
 import core.thread.osthread;
 import fast_noise;
 import mcyeti.util;
@@ -74,7 +77,10 @@ class WorldException : Exception {
 	}
 }
 
-class World {  
+class World {
+	static const ushort LATEST_VERSION = 3;
+	static const uint   DONT_BACKUP = 0;
+
 	Vec3!ushort    spawn;
 	Client[256]    clients;
 	
@@ -84,10 +90,9 @@ class World {
 	private ubyte[]     blocks;
 	private Vec3!ushort size;
 	private ushort      formatVersion;
-	private bool        changed = false;
-	bool                doBackups;
-
-	static ushort latestVersion = 2;
+	private bool        changed;
+	private bool        backupChanged = true; // true even if it will be loaded from disk
+	uint                backupIntervalMinutes; // the default value equals to DONT_BACKUP
 
 	this(Vec3!ushort psize, string pname, string generator = "flat") {
 		size   = psize;
@@ -104,7 +109,7 @@ class World {
 			clients[i] = null;
 		}
 
-		formatVersion = 2;
+		formatVersion = LATEST_VERSION;
 
 		switch (generator) {
 			case "flat": {
@@ -121,7 +126,7 @@ class World {
 		}
 	}
 
-	this(string fileName) {
+	this(Server server, string fileName) {
 		if (baseName(fileName) != fileName) {
 			throw new WorldException("Bad world name");
 		}
@@ -136,25 +141,39 @@ class World {
 
 		auto data = cast(ubyte[]) read(worldPath);
 
-		size.x          = data[0 .. 2].bigEndianToNative!ushort();
-		size.y          = data[2 .. 4].bigEndianToNative!ushort();
-		size.z          = data[4 .. 6].bigEndianToNative!ushort();
-		spawn.x         = data[6 .. 8].bigEndianToNative!ushort();
-		spawn.y         = data[8 .. 10].bigEndianToNative!ushort();
-		spawn.z         = data[10 .. 12].bigEndianToNative!ushort();
-		permissionBuild = data[12];
-		permissionVisit = data[13];
-		formatVersion   = data[14 .. 16].bigEndianToNative!ushort();
+		size.x                = data[0 .. 2].bigEndianToNative!ushort();
+		size.y                = data[2 .. 4].bigEndianToNative!ushort();
+		size.z                = data[4 .. 6].bigEndianToNative!ushort();
+		spawn.x               = data[6 .. 8].bigEndianToNative!ushort();
+		spawn.y               = data[8 .. 10].bigEndianToNative!ushort();
+		spawn.z               = data[10 .. 12].bigEndianToNative!ushort();
+		permissionBuild       = data[12];
+		permissionVisit       = data[13];
+		formatVersion         = data[14 .. 16].bigEndianToNative!ushort();
+		backupIntervalMinutes = data[16 .. 20].bigEndianToNative!uint();
 
-		if (formatVersion >= 2) {
-			doBackups = data[16] > 0? true : false;
-		}
-		else {
-			doBackups = true;
-		}
-		
-		if (formatVersion > latestVersion) {
+		UUID lastServerID     = UUID(data[20 .. 36]);
+
+		if (formatVersion > LATEST_VERSION) {
 			throw new WorldException("Unsupported formatVersion");
+		}
+
+		if (formatVersion == 2) {
+			bool doBackups = data[16] > 0;
+			if (doBackups) {
+				backupIntervalMinutes = 10080; // will be backing up once a week
+			} else {
+				backupIntervalMinutes = DONT_BACKUP;
+			}
+		}
+		if (formatVersion >= 1) {
+			formatVersion = LATEST_VERSION;
+		}
+		if (server.config.serverID != lastServerID) {
+			backupIntervalMinutes = DONT_BACKUP;
+
+			Log("%s %s", server.config.serverID.toString(), lastServerID.toString());
+			Log("[WARN] Backup settings for world \"%s\" were reset", fileName);
 		}
 
 		blocks = data[512 .. $];
@@ -164,27 +183,45 @@ class World {
 		}
 	}
 
-	static bool WorldDoesBackups(string name) {
-		string worldPath = dirName(thisExePath()) ~ "/worlds/" ~ name ~ ".ylv";
-		auto   file      = File(worldPath, "rb");
-
-		file.seek(14);
-		auto fileFormatVersion = file.rawRead(new ubyte[2])[0 .. 2].bigEndianToNative!ushort();
-
-		if (fileFormatVersion < 2) {
-			return true;
-		}
-
-		file.seek(16);
-
-		return file.rawRead(new ubyte[1])[0] > 0? true : false;
-	}
-
-	void Save() {
-		if (!changed) return;
+	void Save(Server server, bool isBackup = false) {
+		if (!isBackup && !changed) return;
+		if (isBackup && !backupChanged) return;
 
 		new Thread({
-			string worldPath = dirName(thisExePath()) ~ "/worlds/" ~ name ~ ".ylv";
+			string worldPath = dirName(thisExePath());
+			if (isBackup) {
+				worldPath ~= "/backups/";
+				mkdir(worldPath);
+				SysTime currentTime = Clock.currTime();
+				int day = currentTime.day;
+				int month = currentTime.month;
+				int year = currentTime.year;
+				worldPath ~= (to!string(day) ~ "-" ~ to!string(month) ~ "-" ~ to!string(year)) ~ "/";
+				mkdir(worldPath);
+				worldPath ~= name ~ "/";
+				mkdir(worldPath);
+
+				auto saves = dirEntries(worldPath, SpanMode.shallow)
+									.filter!(f => f.name.endsWith(".ylv"));
+				uint maxID = 0;
+				foreach (d; saves) {
+					int backupID;
+					try {
+						backupID = to!int(d.name);
+					} catch (ConvException) {
+						continue;
+					}
+					if (backupID < 1) continue;
+
+					if (backupID > maxID) {
+						maxID = backupID;
+					}
+				}
+
+				worldPath ~= to!string(maxID + 1) ~ ".ylv";
+			} else {
+				worldPath ~= "/worlds/" ~ name ~ ".ylv";
+			}
 
 			auto file = File(worldPath, "wb");
 
@@ -199,10 +236,9 @@ class World {
 				permissionBuild,
 				permissionVisit
 			] ~
-			latestVersion.nativeToBigEndian() ~
-			[
-				doBackups? cast(ubyte) 1 : cast(ubyte) 0
-			];
+			formatVersion.nativeToBigEndian() ~
+			backupIntervalMinutes.nativeToBigEndian() ~ // setting this ignoring formatVersion
+			server.config.serverID.data; // and this as well. it's intended and is not a bug
 
 			while (metadata.length < 512) {
 				metadata ~= 0;
@@ -214,7 +250,11 @@ class World {
 			file.flush();
 			file.close();
 
-			changed = false;
+			if (isBackup) {
+				backupChanged = false;
+			} else {
+				changed = false;
+			}
 		}).start();
 	}
 
@@ -265,7 +305,7 @@ class World {
 	}
 
 	private size_t GetIndex(ushort x, ushort y, ushort z) {
-		if (formatVersion == 1) {
+		if (formatVersion >= 1) {
 			return (y * size.z + z) * size.x + x;
 		}
 		else {
@@ -283,6 +323,7 @@ class World {
 	void SetBlock(ushort x, ushort y, ushort z, ubyte block, bool sendPacket = true) {
 		blocks[GetIndex(x, y, z)] = block;
 		changed = true;
+		backupChanged = true;
 
 		if (!sendPacket) return;
 
@@ -434,6 +475,7 @@ class World {
 		if (permissionBuild != value) {
 			permissionBuild = value;
 			changed = true;
+			backupChanged = true;
 		}
 	}
 
@@ -445,6 +487,7 @@ class World {
 		if (permissionVisit != value) {
 			permissionVisit = value;
 			changed = true;
+			backupChanged = true;
 		}
 	}
 
