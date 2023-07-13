@@ -26,7 +26,7 @@ class CuboidCommand : Command {
 		];
 		argumentsRequired = 0;
 		permission        = 0x00;
-		category          = CommandCategory.World;
+		category          = CommandCategory.Building;
 	}
 
 	static void MarkCallback(Client client, Server server, void* extra) {
