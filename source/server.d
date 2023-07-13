@@ -649,18 +649,10 @@ class Server {
 
 		// out
 		foreach (i, ref client ; clients) {
-			auto len = clients.length;
+			client.Update(this);
 
 			if (!client.SendData(this)) {
 				Kick(client, "");
-				//clients = clients.remove(i);
-				Update();
-				return;
-			}
-		
-			client.Update(this);
-					
-			if (len != clients.length) {
 				Update();
 				return;
 			}
