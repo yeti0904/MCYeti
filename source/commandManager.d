@@ -80,6 +80,7 @@ class CommandManager {
 		LoadCommand(new PasteCommand());
 		LoadCommand(new TpCommand());
 		LoadCommand(new SummonCommand());
+		LoadCommand(new BackupCommand());
 		LoadCommand(new RulesCommand());
 		LoadCommand(new MuteCommand());
 		LoadCommand(new TempMuteCommand());
@@ -175,6 +176,10 @@ class CommandManager {
 					throw new CommandException(format(
 						"&cExpected at least %d arguments, found %d", command.argumentsRequired, args.length));
 				}
+				// yeti told that this should not be included (this is going to break titles for ex.)
+				//for (size_t i = 0; i < args.length; i++) {
+				//	args[i] = args[i].LowerString();
+				//}
 				command.Run(server, client, args);
 
 				return;
