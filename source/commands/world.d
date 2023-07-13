@@ -46,7 +46,7 @@ class PerbuildCommand : Command {
 		}
 
 		client.world.SetPermissionBuild(rank);
-		client.world.Save();
+		client.world.Save(server);
 
 		client.SendMessage("&aPerbuild changed");
 	}
@@ -81,7 +81,7 @@ class PervisitCommand : Command {
 		}
 
 		client.world.SetPermissionVisit(rank);
-		client.world.Save();
+		client.world.Save(server);
 
 		client.SendMessage("&aPervisit changed");
 	}
@@ -178,7 +178,7 @@ class NewLevelCommand : Command {
 			client.SendMessage(format("&c%s", e.msg));
 			return;
 		}
-		world.Save();
+		world.Save(server);
 
 		server.worlds ~= world;
 

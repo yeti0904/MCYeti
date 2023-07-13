@@ -19,7 +19,7 @@ enum CommandCategory {
 	World,
 	Building,
 	Chat,
-	
+
 	End
 }
 
@@ -85,6 +85,7 @@ class CommandManager {
 		LoadCommand(new TempMuteCommand());
 		LoadCommand(new UnmuteCommand());
 		LoadCommand(new SayCommand());
+		LoadCommand(new HighFiveCommand());
 	}
 
 	CommandCategory ToCategory(string str) {
@@ -129,7 +130,7 @@ class CommandManager {
 		if (AliasExists(name)) {
 			name = aliases[name.LowerString()];
 		}
-	
+
 		foreach (ref command ; commands) {
 			if (command.name.LowerString() == name.LowerString()) {
 				return command;
@@ -143,7 +144,7 @@ class CommandManager {
 		if (AliasExists(name)) {
 			name = aliases[name.LowerString()];
 		}
-	
+
 		foreach (ref command ; commands) {
 			if (command.name.LowerString() == name.LowerString()) {
 				return true;
@@ -152,12 +153,12 @@ class CommandManager {
 
 		return false;
 	}
-	
+
 	bool CanRunCommand(string name, Client client) {
 		if (AliasExists(name)) {
 			name = aliases[name.LowerString()];
 		}
-	
+
 		auto command = GetCommand(name);
 
 		return client.info["rank"].integer >= command.permission;
@@ -167,7 +168,7 @@ class CommandManager {
 		if (AliasExists(name)) {
 			name = aliases[name.LowerString()];
 		}
-	
+
 		foreach (ref command ; commands) {
 			if (command.name.LowerString() == name.LowerString()) {
 				if (args.length < command.argumentsRequired) {
