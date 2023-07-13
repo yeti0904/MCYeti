@@ -217,12 +217,14 @@ class Client {
 			}
 		}
 
-		while (inBuffer.length != 0) {
+		bool notEnoughData = false;
+		while (inBuffer.length != 0 && !notEnoughData) {
 			switch (inBuffer[0]) {
 				case C2S_Identification.pid: {
 					auto packet = new C2S_Identification();
 
 					if (inBuffer.length < packet.GetSize() + 1) {
+						notEnoughData = true;
 						break;
 					}
 
@@ -326,6 +328,7 @@ class Client {
 					auto packet = new C2S_SetBlock();
 
 					if (inBuffer.length < packet.GetSize() + 1) {
+						notEnoughData = true;
 						break;
 					}
 
@@ -414,6 +417,7 @@ class Client {
 					auto packet = new C2S_Position();
 
 					if (inBuffer.length < packet.GetSize() + 1) {
+						notEnoughData = true;
 						break;
 					}
 
@@ -454,6 +458,7 @@ class Client {
 					auto packet = new C2S_Message();
 
 					if (inBuffer.length < packet.GetSize() + 1) {
+						notEnoughData = true;
 						break;
 					}
 
