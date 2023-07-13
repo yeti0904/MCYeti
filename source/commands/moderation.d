@@ -127,7 +127,7 @@ class UnbanCommand : Command {
 
 class IPBanCommand : Command {
 	this() {
-		name = "ipban";
+		name = "banip";
 		help = [
 			"&a/banip ip [ip]",
 			"&eBans the given IP",

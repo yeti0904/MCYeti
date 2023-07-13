@@ -1,8 +1,9 @@
 module mcyeti.autosave;
 
 import mcyeti.server;
+import mcyeti.util;
 
-private ulong minutesPassed;
+private static ulong minutesPassed;
 
 void AutosaveTask(Server server) {
     if ((minutesPassed ++) == 0) return;

@@ -65,14 +65,6 @@ void main() {
 			if (!exists(dbPath)) {
 				BlockDB.CreateBlockDB(name);
 			}
-
-			string backupPath = format(
-				"%s/backups/%s", dirName(thisExePath()), name
-			);
-
-			if (!exists(backupPath)) {
-				mkdir(backupPath);
-			}
 		}
 	}
 

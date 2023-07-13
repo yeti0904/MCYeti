@@ -111,3 +111,35 @@ string DateToday(bool dashes = false) {
 		return format("%d/%d/%d", time.day, time.month, time.year);
 	}
 }
+
+// ported from Helper.java of https://github.com/minecraft8997/BanAllShadBot
+public static string DiffTime(ulong deltaSeconds) {
+	ulong days = deltaSeconds / 86400;
+	deltaSeconds -= days * 86400;
+	ulong hours = deltaSeconds / 3600;
+	deltaSeconds -= hours * 3600;
+	ulong minutes = deltaSeconds / 60;
+	deltaSeconds -= minutes * 60;
+	ulong seconds = deltaSeconds;
+
+	string result = "";
+	bool needToAppendSpace = false;
+	if (days > 0) {
+		result ~= to!string(days) ~ "d";
+		needToAppendSpace = true;
+	}
+	if (hours > 0) {
+		result ~= (needToAppendSpace ? " " : "") ~ to!string(hours) ~ "h";
+		needToAppendSpace = true;
+	}
+	if (minutes > 0) {
+		result ~= (needToAppendSpace ? " " : "") ~ to!string(minutes) ~ "m";
+		needToAppendSpace = true;
+	}
+	if (seconds > 0) {
+		result ~= (needToAppendSpace ? " " : "") ~ to!string(seconds) ~ "s";
+	}
+	if (result.length == 0) result = "0s";
+
+	return result;
+}
