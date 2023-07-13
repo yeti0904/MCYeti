@@ -9,7 +9,7 @@ import core.thread;
 import mcyeti.blockdb;
 import mcyeti.server;
 
-const int tps          = 50;
+const int tps          = 20; // todo testing this at 20 tps
 const int tickInterval = 1000 / tps;
 
 const string appVersion      = "MCYeti Pre-release";
@@ -74,7 +74,7 @@ void main() {
 
 	while (server.running) {
 		auto sw = StopWatch(AutoStart.yes);
-		
+
 		server.Update();
 		
 		long tookMillis = sw.peek().total!"msecs";
