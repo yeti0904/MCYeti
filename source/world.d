@@ -17,6 +17,7 @@ import mcyeti.util;
 import mcyeti.types;
 import mcyeti.client;
 import mcyeti.server;
+import mcyeti.blockdb;
 import mcyeti.protocol;
 
 enum Block {
@@ -126,11 +127,7 @@ class World {
 			}
 		}
 
-		// create blockdb
-		string dbPath = format(
-			"%s/blockdb/%s.db", dirName(thisExePath()), name
-		);
-		std.file.write(dbPath, []);
+		BlockDB.CreateBlockDB(name);
 	}
 
 	this(Server server, string fileName) {
