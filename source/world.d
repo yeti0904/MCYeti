@@ -6,6 +6,7 @@ import std.math;
 import std.path;
 import std.uuid;
 import std.stdio;
+import std.format;
 import std.random;
 import std.bitmanip;
 import std.algorithm;
@@ -78,8 +79,8 @@ class WorldException : Exception {
 }
 
 class World {
-	static const ushort LATEST_VERSION = 3;
-	static const uint   DONT_BACKUP = 0;
+	static const ushort latestVersion = 3;
+	static const uint   dontBackup = 0;
 
 	Vec3!ushort    spawn;
 	Client[256]    clients;
@@ -92,7 +93,7 @@ class World {
 	private ushort      formatVersion;
 	private bool        changed;
 	private bool        backupChanged = true; // true even if it will be loaded from disk
-	uint                backupIntervalMinutes; // the default value equals to DONT_BACKUP
+	uint                backupIntervalMinutes; // the default value equals to dontBackup
 
 	this(Vec3!ushort psize, string pname, string generator = "flat") {
 		size   = psize;
@@ -109,7 +110,7 @@ class World {
 			clients[i] = null;
 		}
 
-		formatVersion = LATEST_VERSION;
+		formatVersion = latestVersion;
 
 		switch (generator) {
 			case "flat": {
@@ -124,6 +125,12 @@ class World {
 				throw new WorldException("Unknown generator specified!");
 			}
 		}
+
+		// create blockdb
+		string dbPath = format(
+			"%s/blockdb/%s.db", dirName(thisExePath()), name
+		);
+		std.file.write(dbPath, []);
 	}
 
 	this(Server server, string fileName) {
@@ -154,23 +161,23 @@ class World {
 
 		UUID lastServerID     = UUID(data[20 .. 36]);
 
-		if (formatVersion > LATEST_VERSION) {
+		if (formatVersion > latestVersion) {
 			throw new WorldException("Unsupported formatVersion");
 		}
 
 		if (formatVersion == 2) {
 			bool doBackups = data[16] > 0;
 			if (doBackups) {
-				backupIntervalMinutes = 10080; // will be backing up once a week
+				backupIntervalMinutes = 60; // will be backing up hourly
 			} else {
-				backupIntervalMinutes = DONT_BACKUP;
+				backupIntervalMinutes = dontBackup;
 			}
 		}
 		if (formatVersion >= 1) {
-			formatVersion = LATEST_VERSION;
+			formatVersion = latestVersion;
 		}
 		if (server.config.serverID != lastServerID) {
-			backupIntervalMinutes = DONT_BACKUP;
+			backupIntervalMinutes = dontBackup;
 
 			Log("%s %s", server.config.serverID.toString(), lastServerID.toString());
 			Log("[WARN] Backup settings for world \"%s\" were reset", fileName);
