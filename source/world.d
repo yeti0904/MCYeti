@@ -172,7 +172,6 @@ class World {
 		if (server.config.serverID != lastServerID) {
 			backupIntervalMinutes = DONT_BACKUP;
 
-			Log("%s %s", server.config.serverID.toString(), lastServerID.toString());
 			Log("[WARN] Backup settings for world \"%s\" were reset", fileName);
 		}
 
@@ -180,6 +179,14 @@ class World {
 
 		if (size.x * size.y * size.z != blocks.length) {
 			throw new WorldException("Block array size does not match volume of map");
+		}
+	}
+
+	private static void MkdirIgnoreException(string path) {
+		try {
+			mkdir(path);
+		}
+		catch (Exception) { // FileException on POSIX and WindowsException on Windows
 		}
 	}
 
@@ -191,23 +198,20 @@ class World {
 			string worldPath = dirName(thisExePath());
 			if (isBackup) {
 				worldPath ~= "/backups/";
-				mkdir(worldPath);
-				SysTime currentTime = Clock.currTime();
-				int day = currentTime.day;
-				int month = currentTime.month;
-				int year = currentTime.year;
-				worldPath ~= (to!string(day) ~ "-" ~ to!string(month) ~ "-" ~ to!string(year)) ~ "/";
-				mkdir(worldPath);
+				MkdirIgnoreException(worldPath);
+				worldPath ~= DateToday(true) ~ "/";
+				MkdirIgnoreException(worldPath);
 				worldPath ~= name ~ "/";
-				mkdir(worldPath);
+				MkdirIgnoreException(worldPath);
 
 				auto saves = dirEntries(worldPath, SpanMode.shallow)
 									.filter!(f => f.name.endsWith(".ylv"));
 				uint maxID = 0;
 				foreach (d; saves) {
+					string name = baseName(d.name).stripExtension();
 					int backupID;
 					try {
-						backupID = to!int(d.name);
+						backupID = to!int(name);
 					} catch (ConvException) {
 						continue;
 					}

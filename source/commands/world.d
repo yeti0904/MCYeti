@@ -10,6 +10,7 @@ import std.string;
 import std.datetime;
 import std.algorithm;
 import core.stdc.stdlib;
+import mcyeti.util;
 import mcyeti.types;
 import mcyeti.world;
 import mcyeti.client;
@@ -226,7 +227,7 @@ class BlockInfoCommand : Command {
 			Duration time = currentTime - entryTime;
 
 			msg = format(
-				"  &e%s ago: ", time.toString
+				"  &e%s ago: ", DiffTime(time.total!"seconds")
 			);
 
 			if (entry.blockType == 0) {
@@ -411,3 +412,56 @@ class SummonCommand : Command {
 		client.SendMessage("&eSummoned player");
 	}
 }
+
+class BackupCommand : Command {
+	this() {
+		name = "backup";
+		help = [
+			"&a/backup <info/setinterval <minutes>>",
+			"&eConfigures interval of making backups for this world"
+		];
+		argumentsRequired = 1;
+		permission        = 0xE0;
+		category          = CommandCategory.World;
+	}
+
+	override void Run(Server server, Client client, string[] args) {
+		World world = client.world;
+		switch (args[0]) {
+			case "info": {
+				uint interval = world.backupIntervalMinutes;
+				if (interval == world.DONT_BACKUP) {
+					client.SendMessage("&eThe current backup interval is &cnever");
+					return;
+				}
+				client.SendMessage(format("&eThe current backup interval is &f%s (=%d minute(s))",
+											DiffTime(interval * 60L), interval));
+				break;
+			}
+			case "setinterval": {
+				if (args.length < 2) {
+					client.SendMessage("&cMissing \"minutes\" parameter");
+					return;
+				}
+				uint minutes;
+				try {
+					minutes = to!uint(args[1]);
+				}
+				catch (ConvException) {
+					client.SendMessage("&cNot an integer");
+					return;
+				}
+				world.backupIntervalMinutes = minutes;
+				client.SendMessage(format("&aThe new interval is &f%s", DiffTime(minutes * 60L)));
+
+				break;
+			}
+			default: {
+				client.SendMessage("&cUnknown subcommand");
+
+				break;
+			}
+		}
+	}
+}
+
