@@ -67,16 +67,16 @@ void Log(string str) {
 	logFile.writeln(str);
 }
 
-long StringAsTimespan(string str) {
+ulong StringAsTimespan(string str) {
 	if (str.length == 0) {
 		throw new UtilException("Invalid timespan");
 	}
 
-	long ret;
+	ulong ret;
 	string num = str[0 .. $ - 1];
 
 	try {
-		ret = num.parse!int();
+		ret = num.parse!uint();
 	}
 	catch (ConvException) {
 		throw new UtilException("Invalid timespan");
