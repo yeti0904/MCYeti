@@ -12,7 +12,7 @@ import mcyeti.util;
 import mcyeti.server;
 
 const uint hearbeatIntervalMillis = 30000;
-static Server server;
+private static Server server;
 
 void SendHeartbeat() {
     string url = format(

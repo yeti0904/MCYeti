@@ -434,7 +434,13 @@ class BackupCommand : Command {
 					return;
 				}
 				world.backupIntervalMinutes = minutes;
-				client.SendMessage(format("&aThe new interval is &f%s", DiffTime(minutes * 60L)));
+				string message;
+				if (minutes == 0) {
+					message = "&aThe new interval is &cnever";
+				} else {
+					message = format("&aThe new interval is &f%s", DiffTime(minutes * 60L));
+				}
+				client.SendMessage(message);
 
 				break;
 			}
