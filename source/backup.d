@@ -9,9 +9,10 @@ void BackupTask(Server server) {
     if ((minutesPassed ++) == 0) return;
 
     foreach (i, ref world ; server.worlds) {
-        if (world.backupIntervalMinutes == world.dontBackup) continue;
+        uint interval = world.GetBackupIntervalMinutes();
+        if (interval == world.dontBackup) continue;
 
-        if (minutesPassed % world.backupIntervalMinutes == 0) {
+        if (minutesPassed % interval == 0) {
             world.Save(server, true);
         }
     }

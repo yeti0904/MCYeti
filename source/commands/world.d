@@ -411,7 +411,7 @@ class BackupCommand : Command {
 		World world = client.world;
 		switch (args[0]) {
 			case "info": {
-				uint interval = world.backupIntervalMinutes;
+				uint interval = world.GetBackupIntervalMinutes();
 				if (interval == world.dontBackup) {
 					client.SendMessage("&eThe current backup interval is &cnever");
 					return;
@@ -433,7 +433,7 @@ class BackupCommand : Command {
 					client.SendMessage("&cNot an integer");
 					return;
 				}
-				world.backupIntervalMinutes = minutes;
+				world.SetBackupIntervalMinutes(minutes);
 				string message;
 				if (minutes == 0) {
 					message = "&aThe new interval is &cnever";
