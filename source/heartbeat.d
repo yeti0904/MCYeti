@@ -11,7 +11,7 @@ import mcyeti.app;
 import mcyeti.util;
 import mcyeti.server;
 
-const uint hearbeatIntervalMillis = 40000;
+const uint hearbeatIntervalMillis = 35000;
 private static Server server;
 
 void SendHeartbeat() {
@@ -31,16 +31,10 @@ void SendHeartbeat() {
     static string oldServerURL;
 
     try {
-        auto response = byLineAsync(url);
-        if (response.wait(dur!"seconds"(30))) {
-            serverURL = cast(string) response.front;
-        }
-        else {
-            throw new Exception("Timed out");
-        }
+        serverURL = cast(string) get(url);
     }
-    catch (Exception e) {
-        Log("Failed to receive response from the heartbeat server: %s", e.msg);
+    catch (CurlException e) {
+        Log("A CurlException occurred: %s", e.msg);
         return;
     }
 
