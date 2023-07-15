@@ -20,6 +20,7 @@ import mcyeti.ping;
 import mcyeti.util;
 import mcyeti.types;
 import mcyeti.world;
+import mcyeti.backup;
 import mcyeti.client;
 import mcyeti.autosave;
 import mcyeti.protocol;
@@ -174,9 +175,10 @@ class Server {
 		ReloadCmdPermissions();
 
 		// add tasks
-		AddScheduleTask("heartbeat", tps * 30, true, &HeartbeatTask);
-		AddScheduleTask("autosave",  tps * 60, true, &AutosaveTask);
-		AddScheduleTask("ping",      10,  true, &PingTask); // todo probably should depend on tps
+		AddScheduleTask("heartbeat", tps * 30,  true, &HeartbeatTask);
+		AddScheduleTask("backup",    tps * 60,  true, &BackupTask);
+		AddScheduleTask("autosave",  tps * 120, true, &AutosaveTask);
+		AddScheduleTask("ping",      tps / 2,   true, &PingTask);
 	}
 
 	void Init() {
