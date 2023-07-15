@@ -11,7 +11,7 @@ import mcyeti.app;
 import mcyeti.util;
 import mcyeti.server;
 
-const uint hearbeatIntervalMillis = 30000;
+const uint hearbeatIntervalMillis = 40000;
 private static Server server;
 
 void SendHeartbeat() {
@@ -32,7 +32,7 @@ void SendHeartbeat() {
 
     try {
         auto response = byLineAsync(url);
-        if (response.wait(dur!"seconds"(15))) {
+        if (response.wait(dur!"seconds"(30))) {
             serverURL = cast(string) response.front;
         }
         else {
