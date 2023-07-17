@@ -15,3 +15,4 @@ dub build
 
 ### Extra info
 - use /help to see commands
+- for converting ClassicWorld (.cw) levels to .ylv, please use [this](https://github.com/minecraft8997/CW2YLV)
