@@ -4,6 +4,7 @@ import std.file;
 import std.path;
 import std.stdio;
 import std.bitmanip;
+static import undead = undead.stream;
 import mcyeti.protocol;
 import mcyeti.util;
 
@@ -28,6 +29,7 @@ class BlockDB {
 	private string path;
 
 	static size_t blockEntrySize = 50;
+	static uint   metaLength = 2;
 	static ushort latestVersion  = 0x00;
 	
 	this(string name) {
@@ -35,7 +37,7 @@ class BlockDB {
 		
 		auto file = File(path, "rb");
 
-		if ((file.size < 2) || (((file.size() - 2) % blockEntrySize) != 0)) {
+		if ((file.size < metaLength) || (((file.size() - metaLength) % blockEntrySize) != 0)) {
 			throw new BlockDBException("Invalid BlockDB");
 		}
 	}
@@ -51,22 +53,28 @@ class BlockDB {
 		return File(path, mode);
 	}
 
-	BlockEntry GetEntry(size_t index) {
-		auto file = Open("rb");
-	
-		file.seek(2 + index * blockEntrySize);
-		
-		auto data = file.rawRead(new ubyte[blockEntrySize]);
+	undead.Stream OpenStream() {
+		return new undead.BufferedFile(path);
+	}
+
+	void SkipMetadata(undead.Stream stream) {
+		for (uint i = 0; i < metaLength; ++ i) {
+			stream.getc();
+		}
+	}
+
+	BlockEntry NextEntry(undead.Stream stream, ubyte[] buffer) {
+		stream.read(buffer);
 
 		BlockEntry ret;
-		ret.player        = data[0 .. 16].FromClassicString(16);
-		ret.x             = data[16 .. 18].bigEndianToNative!ushort();
-		ret.y             = data[18 .. 20].bigEndianToNative!ushort();
-		ret.z             = data[20 .. 22].bigEndianToNative!ushort();
-		ret.blockType     = data[22 .. 24].bigEndianToNative!ushort();
-		ret.previousBlock = data[24 .. 26].bigEndianToNative!ushort();
-		ret.time          = data[26 .. 34].bigEndianToNative!ulong();
-		ret.extra         = data[34 .. 50].FromClassicString(16);
+		ret.player        = buffer[0 .. 16].FromClassicString(16);
+		ret.x             = buffer[16 .. 18].bigEndianToNative!ushort();
+		ret.y             = buffer[18 .. 20].bigEndianToNative!ushort();
+		ret.z             = buffer[20 .. 22].bigEndianToNative!ushort();
+		ret.blockType     = buffer[22 .. 24].bigEndianToNative!ushort();
+		ret.previousBlock = buffer[24 .. 26].bigEndianToNative!ushort();
+		ret.time          = buffer[26 .. 34].bigEndianToNative!ulong();
+		ret.extra         = buffer[34 .. 50].FromClassicString(16);
 
 		return ret;
 	}
@@ -85,7 +93,6 @@ class BlockDB {
 		ret[26 .. 34] = entry.time.nativeToBigEndian();
 		ret[34 .. 50] = entry.extra.ToClassicString(16);
 
-
 		return ret;
 	}
 
@@ -96,6 +103,6 @@ class BlockDB {
 	}
 
 	ulong GetEntryAmount() {
-		return getSize(path) / blockEntrySize;
+		return (getSize(path) - metaLength) / blockEntrySize;
 	}
 }

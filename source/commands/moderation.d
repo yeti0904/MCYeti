@@ -46,7 +46,7 @@ class BanCommand : Command {
 	this() {
 		name = "ban";
 		help = [
-			"&a/ban [username]",
+			"&a/ban <username>",
 			"&eBans the given player"
 		];
 		argumentsRequired = 1;
@@ -91,7 +91,7 @@ class UnbanCommand : Command {
 	this() {
 		name = "unban";
 		help = [
-			"&a/unban [username]", // todo for an obligatory argument usually it's <username>?
+			"&a/unban <username>",
 			"&eUnbans the given player"
 		];
 		argumentsRequired = 1;
@@ -129,9 +129,9 @@ class IPBanCommand : Command {
 	this() {
 		name = "banip";
 		help = [
-			"&a/banip ip [ip]",
+			"&a/banip ip <ip>",
 			"&eBans the given IP",
-			"&a/banip player [player]",
+			"&a/banip player <player>",
 			"&eBans the IP of the given player"
 		];
 		argumentsRequired = 2;
@@ -140,12 +140,6 @@ class IPBanCommand : Command {
 	}
 
 	override void Run(Server server, Client client, string[] args) {
-		// todo no longer needed?
-		if (args.length != 2) {
-			client.SendMessage("&c2 parameters required");
-			return;
-		}
-
 		switch (args[0]) {
 			case "ip": {
 				server.KickIPs(args[1], "You are banned!");
@@ -177,7 +171,7 @@ class IPUnbanCommand : Command {
 	this() {
 		name = "ipunban";
 		help = [
-			"&a/ipunban [ip]",
+			"&a/ipunban <ip>",
 			"&eUnbans the given IP"
 		];
 		argumentsRequired = 1;
@@ -188,12 +182,6 @@ class IPUnbanCommand : Command {
 	override void Run(Server server, Client client, string[] args) {
 		string   path = dirName(thisExePath()) ~ "/banned_ips.txt";
 		string[] ips  = readText(path).split('\n');
-
-		// todo no longer needed?
-		if (args.length != 1) {
-			client.SendMessage("&c1 parameter required (IP)");
-			return;
-		}
 
 		if (!ips.canFind(args[0])) {
 			client.SendMessage("&cIP not banned");
@@ -213,7 +201,7 @@ class WarnCommand : Command {
 	this() {
 		name = "warn";
 		help = [
-			"&a/warn [user] [reason]",
+			"&a/warn <user> <reason>",
 			"&eWarns the given user with the given reason"
 		];
 		argumentsRequired = 2;
@@ -305,7 +293,7 @@ class MuteCommand : Command {
 	this() {
 		name = "mute";
 		help = [
-			"&a/mute [username] <reason>",
+			"&a/mute <username> [reason]",
 			"&eMutes the given player"
 		];
 		argumentsRequired = 1;
@@ -352,7 +340,7 @@ class TempMuteCommand : Command {
 	this() {
 		name = "tempmute";
 		help = [
-			"&a/tempmute [username] [time] <reason>",
+			"&a/tempmute <username> <time> [reason]",
 			"&eMutes the given player for the given timespan"
 		];
 		argumentsRequired = 2;
@@ -401,7 +389,7 @@ class UnmuteCommand : Command {
 	this() {
 		name = "unmute";
 		help = [
-			"&a/unmute [username]",
+			"&a/unmute <username>",
 			"&eUnmutes the given player"
 		];
 		argumentsRequired = 1;
@@ -445,7 +433,7 @@ class CmdSetCommand : Command {
 	this() {
 		name = "cmdset";
 		help = [
-			"&a/cmdset [command] [permission]",
+			"&a/cmdset <command> <permission>",
 			"&eSets the given command's permission to the given permission"
 		];
 		argumentsRequired = 2;
@@ -477,7 +465,7 @@ class UndoPlayerCommand : Command {
 	this() {
 		name = "undoplayer";
 		help = [
-			"&a/undoplayer [username] <timespan>",
+			"&a/undoplayer <username> [timespan]",
 			"&eUndos all of the given player's changes on this map"
 		];
 		argumentsRequired = 1;
@@ -507,9 +495,11 @@ class UndoPlayerCommand : Command {
 			}
 		}
 
+		auto stream = blockdb.OpenStream();
+		blockdb.SkipMetadata(stream);
+		auto buffer = new ubyte[blockdb.blockEntrySize];
 		foreach (i ; iota(0, blockdb.GetEntryAmount()).retro()) {
-			auto entry = blockdb.GetEntry(i);
-
+			auto entry = blockdb.NextEntry(stream, buffer);
 			if (entry.player != args[0]) {
 				continue;
 			}

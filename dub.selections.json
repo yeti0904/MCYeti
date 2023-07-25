@@ -3,6 +3,7 @@
 	"versions": {
 		"csprng": "1.1.2",
 		"dauth": "0.6.4",
-		"fast_noise": "1.0.5"
+		"fast_noise": "1.0.5",
+		"undead": "1.1.8"
 	}
 }
