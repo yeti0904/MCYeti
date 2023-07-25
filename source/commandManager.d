@@ -87,6 +87,8 @@ class CommandManager {
 		LoadCommand(new UnmuteCommand());
 		LoadCommand(new SayCommand());
 		LoadCommand(new HighFiveCommand());
+		LoadCommand(new RickRollCommand());
+		LoadCommand(new ClientsCommand());
 	}
 
 	CommandCategory ToCategory(string str) {

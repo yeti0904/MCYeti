@@ -60,6 +60,13 @@ class S2C_Packet {
 	abstract ubyte[] CreateData();
 }
 
+// bidirectional, like ExtInfo and ExtEntry
+class BiPacket {
+	abstract size_t  GetSize();
+	abstract void    FromData(ubyte[] bytes);
+	abstract ubyte[] CreateData();
+}
+
 class C2S_Identification : C2S_Packet {
 	ubyte  protocolVersion;
 	string username;

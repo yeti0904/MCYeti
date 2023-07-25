@@ -326,3 +326,47 @@ class RickRollCommand : Command {
 		client.SendMessage("&ehttps://youtube.com/watch?v=dQw4w9WgXcQ");
 	}
 }
+
+class ClientsCommand : Command {
+	this() {
+		name = "clients";
+		help = [
+			"&a/clients",
+			"&eShows what client everyone is using"
+		];
+		argumentsRequired = 0;
+		permission        = 0x00;
+		category          = CommandCategory.Info;
+	}
+
+	override void Run(Server server, Client client, string[] args) {
+		string[][string] clients;
+
+		foreach (ref iclient ; server.clients) {
+			if (!iclient.authenticated) {
+				continue;
+			}
+			
+			if (iclient.GetClientName() !in clients) {
+				clients[iclient.GetClientName()] = [];
+			}
+			
+			clients[iclient.GetClientName()] ~= iclient.username;
+		}
+
+		client.SendMessage("&ePlayers using:");
+		foreach (clientName, users ; clients) {
+			string msg = format("&e  %s:&f ", clientName);
+
+			foreach (i, ref user ; users) {
+				msg ~= user;
+
+				if (i < users.length - 1) {
+					msg ~= ", ";
+				}
+			}
+
+			client.SendMessage(msg);
+		}
+	}
+}
