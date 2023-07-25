@@ -7,6 +7,7 @@ import std.path;
 import std.array;
 import std.format;
 import std.string;
+import std.random;
 import std.datetime;
 import std.algorithm;
 import core.stdc.stdlib;
@@ -386,6 +387,25 @@ class KissCommand : Command {
 		auto player = server.GetPlayer(args[0]);
 		server.SendGlobalMessage(
 			format("%s&e kissed %s", client.GetDisplayName(), player.GetDisplayName())
+		);
+	}
+}
+class RollCommand : Command {
+	this() {
+		name = "roll";
+		help = [
+			"&a/roll",
+			"&eRolls a die."
+		];
+		argumentsRequired = 0;
+		permission        = 0x00;
+		category          = CommandCategory.Chat;
+	}
+
+	override void Run(Server server, Client client, string[] args) {
+		auto d6 = 1 + dice(1, 1, 1, 1, 1, 1); // Copied from https://dlang.org/phobos/std_random.html#dice
+		server.SendGlobalMessage(
+			format("%s&e rolled a %s", client.GetDisplayName(), d6)
 		);
 	}
 }
