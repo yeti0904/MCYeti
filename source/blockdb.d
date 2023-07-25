@@ -54,15 +54,15 @@ class BlockDB {
 	}
 
 	undead.Stream OpenInputStream() {
-		return new undead.BufferedFile(path);
+		return new undead.BufferedFile(path, undead.FileMode.In, 33554432 /* 32 MiB */);
 	}
 
 	undead.Stream OpenOutputStream() {
-		return new undead.BufferedFile(path, undead.FileMode.Out);
+		return new undead.BufferedFile(path, undead.FileMode.Out, 33554432);
 	}
 
 	undead.Stream OpenOutputStreamAppend() {
-		return new undead.BufferedFile(path, undead.FileMode.Append);
+		return new undead.BufferedFile(path, undead.FileMode.Append, 33554432);
 	}
 
 	void SkipMetadata(undead.Stream stream) {
