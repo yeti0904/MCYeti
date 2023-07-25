@@ -495,11 +495,11 @@ class UndoPlayerCommand : Command {
 			}
 		}
 
-		auto file = blockdb.Open("rb");
+		auto stream = blockdb.OpenStream();
+		blockdb.SkipMetadata(stream);
 		auto buffer = new ubyte[blockdb.blockEntrySize];
 		foreach (i ; iota(0, blockdb.GetEntryAmount()).retro()) {
-			auto entry = blockdb.GetEntry(i, file, buffer);
-
+			auto entry = blockdb.NextEntry(stream, buffer);
 			if (entry.player != args[0]) {
 				continue;
 			}
