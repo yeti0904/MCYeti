@@ -42,6 +42,8 @@ class CuboidCommand : Command {
 		);
 		auto blockdb = new BlockDB(client.world.GetName());
 
+		auto stream = blockdb.OpenOutputStreamAppend();
+		auto buffer = new ubyte[blockdb.blockEntrySize];
 		for (ushort y = start.y; y <= end.y; ++ y) {
 			for (ushort z = start.z; z <= end.z; ++ z) {
 				for (ushort x = start.x; x <= end.x; ++ x) {
@@ -61,10 +63,12 @@ class CuboidCommand : Command {
 					entry.previousBlock = oldBlock;
 					entry.time          = Clock.currTime().toUnixTime();
 					entry.extra         = "(Drawn)";
-					blockdb.AppendEntry(entry);
+					blockdb.AppendEntry(stream, entry, buffer);
 				}
 			}
 		}
+		stream.flush();
+		stream.close();
 
 		auto size = Vec3!ushort(
 			cast(ushort) (end.x - start.x),
