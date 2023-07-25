@@ -169,7 +169,7 @@ class Client {
 		std.file.write(infoPath, info.toPrettyString());
 	}
 
-	void SendWorld(World world, Server server) {
+	void SendWorld(World world, Server server, bool registerNewClient = true) {
 		auto serialised = world.PackXZY();
 
 		outBuffer ~= (new S2C_LevelInit()).CreateData();
@@ -209,7 +209,9 @@ class Client {
 
 		pos = world.spawn.CastTo!float();
 
-		world.NewClient(this, server);
+		if (registerNewClient) {
+			world.NewClient(this, server);
+		}
 	}
 
 	void Mark(uint amount, MarkCallback callback, void* info) {
