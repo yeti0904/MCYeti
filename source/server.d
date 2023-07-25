@@ -605,7 +605,7 @@ class Server {
 		}
 
 		if (success) {
-			Client newClient = new Client(newClientSocket);
+			Client newClient = new Client(newClientSocket, this);
 
 			newClient.socket.blocking = false;
 

@@ -45,11 +45,13 @@ class Client {
 	ushort          markBlock;
 	void*           markInfo;
 	ClipboardItem[] clipboard;
+	ubyte           messagesSent;
+	StopWatch       automuteTimer;
 	
 	private Vec3!float pos;
 	private Dir3D      direction;    
 
-	this(Socket psocket) {
+	this(Socket psocket, Server server) {
 		socket = psocket;
 		ip     = socket.remoteAddress.toAddrString();
 	}
