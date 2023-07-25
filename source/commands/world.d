@@ -189,7 +189,7 @@ class BlockInfoCommand : Command {
 
 		client.SendMessage("&eRetrieving block change records...");
 
-		auto stream = blockdb.OpenStream();
+		auto stream = blockdb.OpenInputStream();
 		blockdb.SkipMetadata(stream);
 		auto buffer = new ubyte[blockdb.blockEntrySize];
 		for (ulong i = 0; i < blockdb.GetEntryAmount(); ++ i) {

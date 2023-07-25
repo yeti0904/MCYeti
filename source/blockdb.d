@@ -53,8 +53,16 @@ class BlockDB {
 		return File(path, mode);
 	}
 
-	undead.Stream OpenStream() {
-		return new undead.BufferedFile(path);
+	undead.Stream OpenInputStream() {
+		return new undead.BufferedFile(path, undead.FileMode.In, 33554432 /* 32 MiB */);
+	}
+
+	undead.Stream OpenOutputStream() {
+		return new undead.BufferedFile(path, undead.FileMode.Out, 33554432);
+	}
+
+	undead.Stream OpenOutputStreamAppend() {
+		return new undead.BufferedFile(path, undead.FileMode.Append, 33554432);
 	}
 
 	void SkipMetadata(undead.Stream stream) {
@@ -79,27 +87,30 @@ class BlockDB {
 		return ret;
 	}
 
-	ubyte[] SerialiseEntry(BlockEntry entry) {
-		ubyte[] ret = new ubyte[](blockEntrySize);
-
+	void SerialiseEntry(BlockEntry entry, ubyte[] buffer) {
 		assert(entry.player.ToClassicString().length == 64);
 
-		ret[0 .. 16]  = entry.player.ToClassicString(16);
-		ret[16 .. 18] = entry.x.nativeToBigEndian();
-		ret[18 .. 20] = entry.y.nativeToBigEndian();
-		ret[20 .. 22] = entry.z.nativeToBigEndian();
-		ret[22 .. 24] = entry.blockType.nativeToBigEndian();
-		ret[24 .. 26] = entry.previousBlock.nativeToBigEndian();
-		ret[26 .. 34] = entry.time.nativeToBigEndian();
-		ret[34 .. 50] = entry.extra.ToClassicString(16);
-
-		return ret;
+		buffer[0 .. 16]  = entry.player.ToClassicString(16);
+		buffer[16 .. 18] = entry.x.nativeToBigEndian();
+		buffer[18 .. 20] = entry.y.nativeToBigEndian();
+		buffer[20 .. 22] = entry.z.nativeToBigEndian();
+		buffer[22 .. 24] = entry.blockType.nativeToBigEndian();
+		buffer[24 .. 26] = entry.previousBlock.nativeToBigEndian();
+		buffer[26 .. 34] = entry.time.nativeToBigEndian();
+		buffer[34 .. 50] = entry.extra.ToClassicString(16);
 	}
 
-	void AppendEntry(BlockEntry entry) {
+	void AppendSingleEntry(BlockEntry entry) {
 		auto file = Open("ab");
-		file.rawWrite(SerialiseEntry(entry));
+		ubyte[] buffer = new ubyte[blockEntrySize];
+		SerialiseEntry(entry, buffer);
+		file.rawWrite(buffer);
 		file.flush();
+	}
+
+	void AppendEntry(undead.Stream stream, BlockEntry entry, ubyte[] buffer) {
+		SerialiseEntry(entry, buffer);
+		stream.write(buffer);
 	}
 
 	ulong GetEntryAmount() {

@@ -413,7 +413,7 @@ class Client {
 						""
 					);
 
-					blockdb.AppendEntry(entry);
+					blockdb.AppendSingleEntry(entry);
 					break;
 				}
 				case C2S_Position.pid: {

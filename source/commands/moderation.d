@@ -495,11 +495,12 @@ class UndoPlayerCommand : Command {
 			}
 		}
 
-		auto stream = blockdb.OpenStream();
-		blockdb.SkipMetadata(stream);
+		auto inStream = blockdb.OpenInputStream();
+		blockdb.SkipMetadata(inStream);
+		auto outStream = blockdb.OpenOutputStreamAppend();
 		auto buffer = new ubyte[blockdb.blockEntrySize];
 		foreach (i ; iota(0, blockdb.GetEntryAmount()).retro()) {
-			auto entry = blockdb.NextEntry(stream, buffer);
+			auto entry = blockdb.NextEntry(inStream, buffer);
 			if (entry.player != args[0]) {
 				continue;
 			}
@@ -524,8 +525,10 @@ class UndoPlayerCommand : Command {
 				time,
 				"(Undone Other)"
 			);
-			blockdb.AppendEntry(undoEntry);
+			blockdb.AppendEntry(outStream, undoEntry, buffer);
 		}
+		outStream.flush();
+		outStream.close();
 
 		client.SendMessage("&cUndone player changes");
 	}
