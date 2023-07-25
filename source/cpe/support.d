@@ -1,7 +1,21 @@
 module mcyeti.cpe.support;
 
 import std.bitmanip;
+import mcyeti.client;
+import mcyeti.server;
 import mcyeti.protocol;
+
+struct Extension {
+	string name;
+	int    extVersion;
+	
+	void function(Client, Server, bool*) handler;
+}
+
+const Extension[] supportedExtensions = [
+	Extension("EmoteFix",  1, null),
+	Extension("FullCP437", 1, null)
+];
 
 class Bi_ExtInfo : BiPacket {
 	string appName;

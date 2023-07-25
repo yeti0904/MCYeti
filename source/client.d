@@ -67,6 +67,14 @@ class Client {
 		extInfo.extensionCount = 0;
 
 		outBuffer ~= extInfo.CreateData();
+
+		foreach (ref ext ; supportedExtensions) {
+			auto entry       = new Bi_ExtEntry();
+			entry.name       = ext.name;
+			entry.extVersion = ext.extVersion;
+
+			outBuffer ~= entry.CreateData();
+		}
 	}
 
 	string GetClientName() {
@@ -263,6 +271,12 @@ class Client {
 
 					authenticated = true;
 
+					// check if client supports CPE
+					if (packet.unused == 0x42) {
+						supportsCPE = true;
+						SendExtensions();
+					}
+					
 					// set up info
 					info = parseJSON("{}");
 					info["rank"]   = 0x00;
@@ -317,11 +331,6 @@ class Client {
 						SaveInfo();
 					}
 
-					// check if client supports CPE
-					if (packet.unused == 0x42) {
-						supportsCPE = true;
-						SendExtensions();
-					}
 
 					auto identification = new S2C_Identification();
 
