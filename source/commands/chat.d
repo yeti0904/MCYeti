@@ -126,7 +126,7 @@ class TitleCommand : Command {
 		}
 
 		if (title.length > 10) {
-			client.SendMessage("&eTitle must be 10 or less letters");
+			client.SendMessage("&eTitle must be 10 or fewer letters");
 			return;
 		}
 
@@ -201,7 +201,7 @@ class NickCommand : Command {
 		nick = nick.strip();
 
 		if (nick.length > 30) {
-			client.SendMessage("&eNickname must be 30 or less letters");
+			client.SendMessage("&eNickname must be 30 or fewer letters");
 			return;
 		}
 
@@ -332,7 +332,9 @@ class HighFiveCommand : Command {
 
 	override void Run(Server server, Client client, string[] args) {
 		if (!server.PlayerOnline(args[0])) {
-			client.SendMessage("&cPlayer not online");
+			client.SendMessage(
+				format("&ePlayer %s is not online", args[0])
+			);
 			return;
 		}
 
@@ -356,7 +358,9 @@ class HugCommand : Command {
 
 	override void Run(Server server, Client client, string[] args) {
 		if (!server.PlayerOnline(args[0])) {
-			client.SendMessage("&cPlayer not online");
+			client.SendMessage(
+				format("&ePlayer %s is not online", args[0])
+			);
 			return;
 		}
 
@@ -380,7 +384,9 @@ class KissCommand : Command {
 
 	override void Run(Server server, Client client, string[] args) {
 		if (!server.PlayerOnline(args[0])) {
-			client.SendMessage("&cPlayer not online");
+			client.SendMessage(
+				format("&ePlayer %s is not online", args[0])
+			);
 			return;
 		}
 
