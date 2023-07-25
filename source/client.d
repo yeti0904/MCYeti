@@ -14,6 +14,7 @@ import std.datetime;
 import std.algorithm;
 import std.digest.md;
 import std.datetime.stopwatch;
+import mcyeti.app;
 import mcyeti.util;
 import mcyeti.types;
 import mcyeti.world;
@@ -21,6 +22,7 @@ import mcyeti.server;
 import mcyeti.blockdb;
 import mcyeti.protocol;
 import mcyeti.commandManager;
+import mcyeti.cpe.support;
 
 alias MarkCallback = void function(Client, Server, void*);
 
@@ -50,28 +52,28 @@ class Client {
 	StopWatch       automuteTimer;
 	
 	private Vec3!float pos;
-	private Dir3D      direction;    
+	private Dir3D      direction;
+	private bool       supportsCPE;
+	private string     clientName;   
 
 	this(Socket psocket, Server server) {
 		socket = psocket;
 		ip     = socket.remoteAddress.toAddrString();
 	}
 
+	private void SendExtensions() {
+		auto extInfo           = new Bi_ExtInfo();
+		extInfo.appName        = appVersion;
+		extInfo.extensionCount = 0;
+
+		outBuffer ~= extInfo.CreateData();
+	}
+
+	string GetClientName() {
+		return supportsCPE? clientName : "Minecraft Classic";
+	}
+
 	string GetDisplayName(bool includeTitle = false) {
-		/*string ret;
-
-		if (includeTitle && (info["title"].str != "")) {
-			ret ~= format("[%s] ", info["title"].str);
-		}
-		
-		ret ~= format(
-			"&%s%s",
-			info["colour"].str,
-			info["nickname"].str == ""? username : info["nickname"].str
-		);
-
-		return ret;*/
-
 		return Client.GetDisplayName(username, info, includeTitle);
 	}
 
@@ -221,7 +223,8 @@ class Client {
 		}
 
 		bool notEnoughData = false;
-		while (inBuffer.length != 0 && !notEnoughData) {
+		
+		while ((inBuffer.length != 0) && !notEnoughData) {
 			switch (inBuffer[0]) {
 				case C2S_Identification.pid: {
 					auto packet = new C2S_Identification();
@@ -312,6 +315,12 @@ class Client {
 					if (server.config.owner == username) {
 						info["rank"] = 0xF0;
 						SaveInfo();
+					}
+
+					// check if client supports CPE
+					if (packet.unused == 0x42) {
+						supportsCPE = true;
+						SendExtensions();
 					}
 
 					auto identification = new S2C_Identification();
@@ -526,6 +535,43 @@ class Client {
 						"%s: &f%s", GetDisplayName(true), packet.message
 					);
 					server.SendGlobalMessage(message);
+					break;
+				}
+				////////////////////////////////////////////
+				//                   CPE                  //
+				////////////////////////////////////////////
+				// Abandon all hope all ye who enter here //
+				////////////////////////////////////////////
+				case Bi_ExtInfo.pid: {
+					auto packet = new Bi_ExtInfo();
+
+					if (inBuffer.length < packet.GetSize() + 1) {
+						notEnoughData = true;
+						break;
+					}
+
+					inBuffer = inBuffer[1 .. $];
+
+					packet.FromData(inBuffer);
+					inBuffer = inBuffer[packet.GetSize() .. $];
+
+					clientName = packet.appName;
+					break;
+				}
+				case Bi_ExtEntry.pid: {
+					auto packet = new Bi_ExtEntry();
+
+					if (inBuffer.length < packet.GetSize() + 1) {
+						notEnoughData = true;
+						break;
+					}
+
+					inBuffer = inBuffer[1 .. $];
+
+					packet.FromData(inBuffer);
+					inBuffer = inBuffer[packet.GetSize() .. $];
+
+					// lol
 					break;
 				}
 				default: {
