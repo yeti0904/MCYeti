@@ -40,17 +40,26 @@ class CuboidCommand : Command {
 			max(client.marks[0].y, client.marks[1].y),
 			max(client.marks[0].z, client.marks[1].z)
 		);
+
+		auto size = Vec3!ushort(
+			cast(ushort) (end.x - start.x),
+			cast(ushort) (end.y - start.y),
+			cast(ushort) (end.z - start.z)
+		);
+		auto volume = size.x * size.y * size.z;
+
 		auto blockdb = new BlockDB(client.world.GetName());
 
 		auto stream = blockdb.OpenOutputStreamAppend();
 		auto buffer = new ubyte[blockdb.blockEntrySize];
+		auto sendPackets = volume < 10000;
 		for (ushort y = start.y; y <= end.y; ++ y) {
 			for (ushort z = start.z; z <= end.z; ++ z) {
 				for (ushort x = start.x; x <= end.x; ++ x) {
 					auto oldBlock = client.world.GetBlock(x, y, z);
 				
 					client.world.SetBlock(
-						x, y, z, cast(ubyte) client.markBlock
+						x, y, z, cast(ubyte) client.markBlock, sendPackets
 					);
 
 					// make blockdb entry
@@ -69,14 +78,18 @@ class CuboidCommand : Command {
 		}
 		stream.flush();
 		stream.close();
+		if (!sendPackets) {
+			foreach (i, player ; client.world.clients) {
+				if (player is null) {
+					continue;
+				}
+				if (player.world !is client.world) {
+					continue;
+				}
 
-		auto size = Vec3!ushort(
-			cast(ushort) (end.x - start.x),
-			cast(ushort) (end.y - start.y),
-			cast(ushort) (end.z - start.z)
-		);
-
-		auto volume = size.x * size.y * size.z;
+				player.SendWorld(client.world, server, false);
+			}
+		}
 
 		client.SendMessage(format("&eFilled %d blocks", volume));
 	}
