@@ -341,3 +341,51 @@ class HighFiveCommand : Command {
 		);
 	}
 }
+class HugCommand : Command {
+	this() {
+		name = "hug";
+		help = [
+			"&a/hug [player]",
+			"&eHugs a player"
+		];
+		argumentsRequired = 1;
+		permission        = 0x00;
+		category          = CommandCategory.Chat;
+	}
+
+	override void Run(Server server, Client client, string[] args) {
+		if (!server.PlayerOnline(args[0])) {
+			client.SendMessage("&cPlayer not online");
+			return;
+		}
+
+		auto player = server.GetPlayer(args[0]);
+		server.SendGlobalMessage(
+			format("%s&e hugged %s", client.GetDisplayName(), player.GetDisplayName())
+		);
+	}
+}
+class KissCommand : Command {
+	this() {
+		name = "kiss";
+		help = [
+			"&a/kiss [player]",
+			"&eKisses a player"
+		];
+		argumentsRequired = 1;
+		permission        = 0x00;
+		category          = CommandCategory.Chat;
+	}
+
+	override void Run(Server server, Client client, string[] args) {
+		if (!server.PlayerOnline(args[0])) {
+			client.SendMessage("&cPlayer not online");
+			return;
+		}
+
+		auto player = server.GetPlayer(args[0]);
+		server.SendGlobalMessage(
+			format("%s&e kissed %s", client.GetDisplayName(), player.GetDisplayName())
+		);
+	}
+}
