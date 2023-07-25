@@ -310,3 +310,19 @@ class RulesCommand : Command {
 		}
 	}
 }
+class RickRollCommand : Command {
+	this() {
+		name = "rickroll";
+		help = [
+			"&a/rickroll",
+			"&eShows you the rickroll link"
+		];
+		argumentsRequired = 0;
+		permission        = 0x00;
+		category          = CommandCategory.Info;
+	}
+
+	override void Run(Server server, Client client, string[] args) {
+		client.SendMessage("&ehttps://youtube.com/watch?v=dQw4w9WgXcQ");
+	}
+}
