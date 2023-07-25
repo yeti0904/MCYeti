@@ -13,6 +13,7 @@ import std.bitmanip;
 import std.datetime;
 import std.algorithm;
 import std.digest.md;
+import std.datetime.stopwatch;
 import mcyeti.util;
 import mcyeti.types;
 import mcyeti.world;
