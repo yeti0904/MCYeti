@@ -22,9 +22,9 @@ class HelpCommand : Command {
 		help = [
 			"&a/help",
 			"&eShows all command categories",
-			"&a/help category [category]",
+			"&a/help category <category>",
 			"&eShows all commands from that category",
-			"&a/help [command]",
+			"&a/help <command>",
 			"&eShows info about how to use that command"
 		];
 		argumentsRequired = 0;
@@ -51,7 +51,7 @@ class HelpCommand : Command {
 				client.SendMessage(format("  %s", cast(CommandCategory) i));
 			}
 
-			client.SendMessage("&eUse /help category [category] for more info");
+			client.SendMessage("&eUse /help category <category> for more info");
 			client.SendMessage("&eAlso use /help help");
 		}
 		else if (args[0] == "category") {
@@ -126,7 +126,7 @@ class InfoCommand : Command {
 	this() {
 		name = "info";
 		help = [
-			"&a/info <player>",
+			"&a/info [player]",
 			"&eShows info for the given player",
 			"&eIf player not given, shows your info"
 		];
@@ -193,6 +193,7 @@ class ServerInfoCommand : Command {
 
 	override void Run(Server server, Client client, string[] args) {
 		client.SendMessage(format("&eAbout &a%s", server.config.name));
+		// do not display the exact version for security reasons
 		client.SendMessage("  &eRunning &aMCYeti");
 		client.SendMessage(format("  &eOwner: &a%s", server.config.owner));
 	}
@@ -307,5 +308,21 @@ class RulesCommand : Command {
 		foreach (ref line ; readText(rulesPath).split("\n")) {
 			client.SendMessage(format("&e%s", line));
 		}
+	}
+}
+class RickRollCommand : Command {
+	this() {
+		name = "rickroll";
+		help = [
+			"&a/rickroll",
+			"&eShows you the rickroll link"
+		];
+		argumentsRequired = 0;
+		permission        = 0x00;
+		category          = CommandCategory.Info;
+	}
+
+	override void Run(Server server, Client client, string[] args) {
+		client.SendMessage("&ehttps://youtube.com/watch?v=dQw4w9WgXcQ");
 	}
 }

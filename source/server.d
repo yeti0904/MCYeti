@@ -14,12 +14,14 @@ import std.net.curl;
 import std.algorithm;
 import std.datetime.stopwatch;
 import core.stdc.stdlib;
+import core.thread.osthread;
 import csprng.system;
 import mcyeti.app;
 import mcyeti.ping;
 import mcyeti.util;
 import mcyeti.types;
 import mcyeti.world;
+import mcyeti.backup;
 import mcyeti.client;
 import mcyeti.autosave;
 import mcyeti.protocol;
@@ -173,10 +175,14 @@ class Server {
 		cmdPermissions = readText(cmdPermissionsPath).parseJSON();
 		ReloadCmdPermissions();
 
+		new Thread({
+			HeartbeatTask(this);
+		}).start();
+
 		// add tasks
-		AddScheduleTask("heartbeat", tps * 30, true, &HeartbeatTask);
-		AddScheduleTask("autosave",  tps * 60, true, &AutosaveTask);
-		AddScheduleTask("ping",      10,  true, &PingTask); // todo probably should depend on tps
+		AddScheduleTask("backup",    tps * 60,  true, &BackupTask);
+		AddScheduleTask("autosave",  tps * 120, true, &AutosaveTask);
+		AddScheduleTask("ping",      tps / 2,   true, &PingTask);
 	}
 
 	void Init() {
@@ -649,18 +655,10 @@ class Server {
 
 		// out
 		foreach (i, ref client ; clients) {
-			auto len = clients.length;
+			client.Update(this);
 
 			if (!client.SendData(this)) {
 				Kick(client, "");
-				//clients = clients.remove(i);
-				Update();
-				return;
-			}
-		
-			client.Update(this);
-					
-			if (len != clients.length) {
 				Update();
 				return;
 			}

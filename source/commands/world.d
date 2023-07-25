@@ -22,7 +22,7 @@ class PerbuildCommand : Command {
 	this() {
 		name = "perbuild";
 		help = [
-			"&a/perbuild [rank]",
+			"&a/perbuild <rank>",
 			"&eSets the minimum rank needed to build on a map"
 		];
 		argumentsRequired = 1;
@@ -31,12 +31,6 @@ class PerbuildCommand : Command {
 	}
 
 	override void Run(Server server, Client client, string[] args) {
-		// todo no longer needed?
-		if (args.length != 1) {
-			client.SendMessage("&c1 parameter required");
-			return;
-		}
-
 		ubyte rank;
 
 		try {
@@ -57,7 +51,7 @@ class PervisitCommand : Command {
 	this() {
 		name = "pervisit";
 		help = [
-			"&a/pervisit [rank]",
+			"&a/pervisit <rank>",
 			"&eSets the minimum rank needed to visit a map"
 		];
 		argumentsRequired = 1;
@@ -66,12 +60,6 @@ class PervisitCommand : Command {
 	}
 
 	override void Run(Server server, Client client, string[] args) {
-		// todo no longer needed?
-		if (args.length != 1) {
-			client.SendMessage("&c1 parameter required");
-			return;
-		}
-
 		ubyte rank;
 
 		try {
@@ -92,7 +80,7 @@ class GotoCommand : Command {
 	this() {
 		name = "goto";
 		help = [
-			"&a/goto [level name]",
+			"&a/goto <level name>",
 			"&eSends you to the given level"
 		];
 		argumentsRequired = 1;
@@ -103,12 +91,6 @@ class GotoCommand : Command {
 	override void Run(Server server, Client client, string[] args) {
 		if (client.marksWaiting > 0) {
 			client.SendMessage("&cCannot move levels while marking");
-			return;
-		}
-	
-		// todo no longer needed?
-		if (args.length != 1) {
-			client.SendMessage("&c1 parameter required");
 			return;
 		}
 
@@ -145,7 +127,7 @@ class NewLevelCommand : Command {
 	this() {
 		name = "newlevel";
 		help = [
-			"&a/newlevel [name] [x size] [y size] [z size] [type]",
+			"&a/newlevel <name> <x size> <y size> <z size> <type>",
 			"&eCreates a new level",
 			"&eTypes: flat, normal"
 		];
@@ -330,9 +312,9 @@ class TpCommand : Command {
 	this() {
 		name = "tp";
 		help = [
-			"&a/tp [username]",
+			"&a/tp <username>",
 			"&eTeleports you to the given player",
-			"&a/tp [x] [y] [z]",
+			"&a/tp <x> <y> <z>",
 			"&eTeleports you to the given coordinates"
 		];
 		argumentsRequired = 1;
@@ -389,7 +371,7 @@ class SummonCommand : Command {
 	this() {
 		name = "summon";
 		help = [
-			"&a/summon [username]",
+			"&a/summon <username>",
 			"&eTeleports the given player to your position"
 		];
 		argumentsRequired = 1;
@@ -429,7 +411,7 @@ class BackupCommand : Command {
 		World world = client.world;
 		switch (args[0]) {
 			case "info": {
-				uint interval = world.backupIntervalMinutes;
+				uint interval = world.GetBackupIntervalMinutes();
 				if (interval == world.dontBackup) {
 					client.SendMessage("&eThe current backup interval is &cnever");
 					return;
@@ -451,8 +433,14 @@ class BackupCommand : Command {
 					client.SendMessage("&cNot an integer");
 					return;
 				}
-				world.backupIntervalMinutes = minutes;
-				client.SendMessage(format("&aThe new interval is &f%s", DiffTime(minutes * 60L)));
+				world.SetBackupIntervalMinutes(minutes);
+				string message;
+				if (minutes == 0) {
+					message = "&aThe new interval is &cnever";
+				} else {
+					message = format("&aThe new interval is &f%s", DiffTime(minutes * 60L));
+				}
+				client.SendMessage(message);
 
 				break;
 			}

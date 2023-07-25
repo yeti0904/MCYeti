@@ -19,7 +19,7 @@ class AddAliasCommand : Command {
 	this() {
 		name = "addalias";
 		help = [
-			"&a/addalias [alias name] [command]",
+			"&a/addalias <alias name> <command>",
 			"&eAdds a new alias"
 		];
 		argumentsRequired = 2;

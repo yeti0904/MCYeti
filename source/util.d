@@ -7,6 +7,9 @@ import std.ascii;
 import std.stdio;
 import std.format;
 import std.datetime;
+import std.datetime.stopwatch;
+import core.thread;
+import mcyeti.server;
 
 class UtilException : Exception {
 	this(string msg, string file = __FILE__, size_t line = __LINE__) {
@@ -64,16 +67,16 @@ void Log(string str) {
 	logFile.writeln(str);
 }
 
-long StringAsTimespan(string str) {
+ulong StringAsTimespan(string str) {
 	if (str.length == 0) {
 		throw new UtilException("Invalid timespan");
 	}
 
-	long ret;
+	ulong ret;
 	string num = str[0 .. $ - 1];
 
 	try {
-		ret = num.parse!int();
+		ret = num.parse!uint();
 	}
 	catch (ConvException) {
 		throw new UtilException("Invalid timespan");
@@ -142,4 +145,18 @@ string DiffTime(ulong deltaSeconds) {
 	if (result.length == 0) result = "0s";
 
 	return result;
+}
+
+void RunningLoop(Server server, ulong tickInterval, void delegate() tick) {
+	while (server.running) {
+		auto sw = StopWatch(AutoStart.yes);
+
+		tick();
+
+		long tookMillis = sw.peek().total!"msecs";
+
+		if (tookMillis <= tickInterval) {
+			Thread.sleep(dur!"msecs"(tickInterval - tookMillis));
+		}
+	}
 }

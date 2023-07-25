@@ -4,13 +4,12 @@ import std.file;
 import std.path;
 import std.stdio;
 import std.format;
-import std.datetime.stopwatch;
-import core.thread;
-import mcyeti.blockdb;
+import mcyeti.util;
 import mcyeti.server;
+import mcyeti.blockdb;
 
-const int tps          = 50;
-const int tickInterval = 1000 / tps;
+const uint tps          = 20;
+const uint tickInterval = 1000 / tps;
 
 const string appVersion      = "MCYeti Pre-release";
 const string[] appDevelopers = [
@@ -72,15 +71,5 @@ void main() {
 
 	server.Init();
 
-	while (server.running) {
-		auto sw = StopWatch(AutoStart.yes);
-		
-		server.Update();
-		
-		long tookMillis = sw.peek().total!"msecs";
-		
-		if (tookMillis <= tickInterval) {
-			Thread.sleep(dur!"msecs"(tickInterval - tookMillis));
-		}
-	}
+	RunningLoop(server, tickInterval, &server.Update);
 }

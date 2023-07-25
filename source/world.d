@@ -17,6 +17,7 @@ import mcyeti.util;
 import mcyeti.types;
 import mcyeti.client;
 import mcyeti.server;
+import mcyeti.blockdb;
 import mcyeti.protocol;
 
 enum Block {
@@ -93,7 +94,7 @@ class World {
 	private ushort      formatVersion;
 	private bool        changed;
 	private bool        backupChanged = true; // true even if it will be loaded from disk
-	uint                backupIntervalMinutes; // the default value equals to dontBackup
+	private uint        backupIntervalMinutes; // the default value equals to dontBackup
 
 	this(Vec3!ushort psize, string pname, string generator = "flat") {
 		size   = psize;
@@ -126,11 +127,7 @@ class World {
 			}
 		}
 
-		// create blockdb
-		string dbPath = format(
-			"%s/blockdb/%s.db", dirName(thisExePath()), name
-		);
-		std.file.write(dbPath, []);
+		BlockDB.CreateBlockDB(name);
 	}
 
 	this(Server server, string fileName) {
@@ -168,16 +165,16 @@ class World {
 		if (formatVersion == 2) {
 			bool doBackups = data[16] > 0;
 			if (doBackups) {
-				backupIntervalMinutes = 60; // will be backing up hourly
+				SetBackupIntervalMinutes(60); // will be backing up hourly
 			} else {
-				backupIntervalMinutes = dontBackup;
+				SetBackupIntervalMinutes(dontBackup);
 			}
 		}
 		if (formatVersion >= 1) {
 			formatVersion = latestVersion;
 		}
 		if (server.config.serverID != lastServerID) {
-			backupIntervalMinutes = dontBackup;
+			SetBackupIntervalMinutes(dontBackup);
 
 			Log("[WARN] Backup settings for world \"%s\" were reset", fileName);
 		}
@@ -485,8 +482,7 @@ class World {
 	void SetPermissionBuild(ubyte value) {
 		if (permissionBuild != value) {
 			permissionBuild = value;
-			changed = true;
-			backupChanged = true;
+			MarkChanged();
 		}
 	}
 
@@ -497,13 +493,28 @@ class World {
 	void SetPermissionVisit(ubyte value) {
 		if (permissionVisit != value) {
 			permissionVisit = value;
-			changed = true;
-			backupChanged = true;
+			MarkChanged();
 		}
 	}
 
 	ubyte GetPermissionVisit() {
 		return permissionVisit;
+	}
+
+	void SetBackupIntervalMinutes(uint value) {
+		if (backupIntervalMinutes != value) {
+			backupIntervalMinutes = value;
+			MarkChanged();
+		}
+	}
+
+	uint GetBackupIntervalMinutes() {
+		return backupIntervalMinutes;
+	}
+
+	private void MarkChanged() {
+		changed = true;
+		backupChanged = true;
 	}
 
 	private ubyte[] CreateBlockArray() {
