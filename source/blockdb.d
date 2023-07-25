@@ -28,6 +28,7 @@ class BlockDB {
 	private string path;
 
 	static size_t blockEntrySize = 50;
+	static uint   metaLength = 2;
 	static ushort latestVersion  = 0x00;
 	
 	this(string name) {
@@ -35,7 +36,7 @@ class BlockDB {
 		
 		auto file = File(path, "rb");
 
-		if ((file.size < 2) || (((file.size() - 2) % blockEntrySize) != 0)) {
+		if ((file.size < metaLength) || (((file.size() - metaLength) % blockEntrySize) != 0)) {
 			throw new BlockDBException("Invalid BlockDB");
 		}
 	}
@@ -51,12 +52,10 @@ class BlockDB {
 		return File(path, mode);
 	}
 
-	BlockEntry GetEntry(size_t index) {
-		auto file = Open("rb");
-	
-		file.seek(2 + index * blockEntrySize);
+	BlockEntry GetEntry(size_t index, File file, ubyte[] buffer) {
+		file.seek(metaLength + index * blockEntrySize);
 		
-		auto data = file.rawRead(new ubyte[blockEntrySize]);
+		auto data = file.rawRead(buffer);
 
 		BlockEntry ret;
 		ret.player        = data[0 .. 16].FromClassicString(16);
@@ -85,7 +84,6 @@ class BlockDB {
 		ret[26 .. 34] = entry.time.nativeToBigEndian();
 		ret[34 .. 50] = entry.extra.ToClassicString(16);
 
-
 		return ret;
 	}
 
@@ -96,6 +94,6 @@ class BlockDB {
 	}
 
 	ulong GetEntryAmount() {
-		return getSize(path) / blockEntrySize;
+		return (getSize(path) - metaLength) / blockEntrySize;
 	}
 }

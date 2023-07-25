@@ -188,11 +188,11 @@ class BlockInfoCommand : Command {
 
 		client.SendMessage("&eRetrieving block change records...");
 
+		auto file = blockdb.Open("rb");
+		auto buffer = new ubyte[blockdb.blockEntrySize];
 		for (ulong i = 0; i < blockdb.GetEntryAmount(); ++ i) {
-			auto entry    = blockdb.GetEntry(i);
-			auto entryPos = Vec3!ushort(entry.x, entry.y, entry.z);
-
-			if (entryPos != pos) {
+			auto entry = blockdb.GetEntry(i, file, buffer);
+			if (entry.x != pos.x || entry.y != pos.y || entry.z != pos.z) {
 				continue;
 			}
 
