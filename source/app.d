@@ -51,7 +51,8 @@ void main() {
 		}
 	}
 
-	// create blockDBs and backup folders for worlds that don't have one
+	// create blockDBs, backup folders and properties files for worlds that
+	// don't have one
 	string worldsFolder = dirName(thisExePath()) ~ "/worlds/";
 	
 	foreach (entry ; dirEntries(worldsFolder, SpanMode.shallow)) {
@@ -63,6 +64,17 @@ void main() {
 
 			if (!exists(dbPath)) {
 				BlockDB.CreateBlockDB(name);
+			}
+
+			string properties = entry.name.stripExtension() ~ ".json";
+			string defaultProperties = "
+				{
+					\"motd\": \"ignore\"
+				}
+			";
+
+			if (!exists(properties)) {
+				std.file.write(properties, defaultProperties);
 			}
 		}
 	}

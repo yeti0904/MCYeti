@@ -370,3 +370,29 @@ class ClientsCommand : Command {
 		}
 	}
 }
+
+class CPEExtensionsCommand : Command {
+	this() {
+		name = "cpeextensions";
+		help = [
+			"&a/cpeextensions",
+			"&eShows all the extensions that both you and the server have"
+		];
+		argumentsRequired = 0;
+		permission        = 0x00;
+		category          = CommandCategory.Info;
+	}
+
+	override void Run(Server server, Client client, string[] args) {
+		if (!client.cpeSupported) {
+			client.SendMessage("&cYou don't have CPE");
+			return;
+		}
+
+		client.SendMessage("&cExtensions:");
+
+		foreach (ref ext ; client.cpeExtensions) {
+			client.SendMessage(format("  &b%s", ext));
+		}
+	}
+}

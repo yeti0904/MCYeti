@@ -8,14 +8,23 @@ import mcyeti.protocol;
 struct Extension {
 	string name;
 	int    extVersion;
-	
-	void function(Client, Server, bool*) handler;
 }
 
 const Extension[] supportedExtensions = [
-	Extension("EmoteFix",  1, null),
-	Extension("FullCP437", 1, null)
+	Extension("EmoteFix",    1),
+	Extension("FullCP437",   1),
+	Extension("InstantMOTD", 1)
 ];
+
+Extension GetExtension(string name) {
+	foreach (ref ext ; supportedExtensions) {
+		if (ext.name == name) {
+			return ext;
+		}
+	}
+
+	throw new ProtocolException("No such extension");
+}
 
 class Bi_ExtInfo : BiPacket {
 	string appName;

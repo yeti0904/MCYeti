@@ -89,6 +89,8 @@ class CommandManager {
 		LoadCommand(new HighFiveCommand());
 		LoadCommand(new RickRollCommand());
 		LoadCommand(new ClientsCommand());
+		LoadCommand(new MapCommand());
+		LoadCommand(new CPEExtensionsCommand());
 	}
 
 	CommandCategory ToCategory(string str) {

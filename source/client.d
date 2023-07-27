@@ -50,10 +50,13 @@ class Client {
 	ClipboardItem[] clipboard;
 	ubyte           messagesSent;
 	StopWatch       automuteTimer;
+
+	bool     cpeSupported;
+	string[] cpeExtensions;
+	uint     cpeExtAmount;
 	
 	private Vec3!float pos;
 	private Dir3D      direction;
-	private bool       supportsCPE;
 	private string     clientName;   
 
 	this(Socket psocket, Server server) {
@@ -78,7 +81,7 @@ class Client {
 	}
 
 	string GetClientName() {
-		return supportsCPE? clientName : "Minecraft Classic";
+		return cpeSupported? clientName : "Minecraft Classic";
 	}
 
 	string GetDisplayName(bool includeTitle = false) {
@@ -219,6 +222,17 @@ class Client {
 		SendMessage("&eMark a block");
 	}
 
+	void SendServerIdentification(Server server, string motd) {
+		auto identification = new S2C_Identification();
+
+		identification.protocolVersion = 0x07;
+		identification.serverName      = server.config.name;
+		identification.motd            = motd;
+		identification.userType        = 0x64;
+
+		outBuffer ~= identification.CreateData();
+	}
+
 	void Update(Server server) {
 		if (info.type != JSONType.null_) {
 			auto time = Clock.currTime().toUnixTime();
@@ -273,7 +287,7 @@ class Client {
 
 					// check if client supports CPE
 					if (packet.unused == 0x42) {
-						supportsCPE = true;
+						cpeSupported = true;
 						SendExtensions();
 					}
 					
@@ -331,18 +345,12 @@ class Client {
 						SaveInfo();
 					}
 
+					SendServerIdentification(server, server.config.motd);
 
-					auto identification = new S2C_Identification();
-
-					identification.protocolVersion = 0x07;
-					identification.serverName      = server.config.name;
-					identification.motd            = server.config.motd;
-					identification.userType        = 0x64;
-
-					outBuffer ~= identification.CreateData();
-
-					// send world
-					server.SendPlayerToWorld(this, server.config.mainLevel);
+					if (!cpeSupported) {
+						// send world
+						server.SendPlayerToWorld(this, server.config.mainLevel);
+					}
 					break;
 				}
 				case C2S_SetBlock.pid: {
@@ -565,6 +573,8 @@ class Client {
 					inBuffer = inBuffer[packet.GetSize() .. $];
 
 					clientName = packet.appName;
+
+					cpeExtAmount = packet.extensionCount;
 					break;
 				}
 				case Bi_ExtEntry.pid: {
@@ -580,7 +590,29 @@ class Client {
 					packet.FromData(inBuffer);
 					inBuffer = inBuffer[packet.GetSize() .. $];
 
-					// lol
+					Extension ext;
+					bool      addExt = true;
+					
+					try {
+						ext = GetExtension(packet.name);
+					}
+					catch (ProtocolException) {
+						addExt = false;
+					}
+
+					if (ext.extVersion != packet.extVersion) {
+						addExt = false;
+					}
+
+					if (addExt) {
+						cpeExtensions ~= packet.name;
+					}
+
+					-- cpeExtAmount;
+					if (cpeExtAmount == 0) {
+						// send world
+						server.SendPlayerToWorld(this, server.config.mainLevel);
+					}
 					break;
 				}
 				default: {
