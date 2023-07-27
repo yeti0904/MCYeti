@@ -225,6 +225,10 @@ class Client {
 	void SendServerIdentification(Server server, string motd) {
 		auto identification = new S2C_Identification();
 
+		if (motd == "ignored") {
+			motd = server.config.motd;
+		}
+
 		identification.protocolVersion = 0x07;
 		identification.serverName      = server.config.name;
 		identification.motd            = motd;
