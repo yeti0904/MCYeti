@@ -416,7 +416,6 @@ class World {
 		clients[id] = client;
 
 		if (client.cpeSupported && client.cpeExtensions.canFind("InstantMOTD")) {
-			writeln("hi");
 			client.SendServerIdentification(server, GetMOTD());
 		}
 
