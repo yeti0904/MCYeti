@@ -281,7 +281,6 @@ class Client {
 
 					if (server.PlayerOnline(packet.username)) {
 						server.Kick(packet.username, "Connected from another client");
-						return;
 					}
 
 					if (packet.protocolVersion != 0x07) {

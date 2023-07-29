@@ -151,7 +151,7 @@ class InfoCommand : Command {
 			info = server.GetPlayerInfo(username);
 		}
 		catch (ServerException e) {
-			client.SendMessage(format("&c%s", username));
+			client.SendMessage(format("&cPlayer not found: %s", username));
 			return;
 		}
 

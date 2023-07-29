@@ -63,7 +63,7 @@ class BanCommand : Command {
 			info = server.GetPlayerInfo(username);
 		}
 		catch (ServerException e) {
-			client.SendMessage(format("&c%s", username));
+			client.SendMessage(format("&cPlayer not found: %s", username));
 			return;
 		}
 
@@ -108,7 +108,7 @@ class UnbanCommand : Command {
 			info = server.GetPlayerInfo(username);
 		}
 		catch (ServerException e) {
-			client.SendMessage(format("&c%s", username));
+			client.SendMessage(format("&cPlayer not found: %s", username));
 			return;
 		}
 
@@ -225,7 +225,7 @@ class WarnCommand : Command {
 			info = server.GetPlayerInfo(username);
 		}
 		catch (ServerException e) {
-			client.SendMessage(format("&c%s", username));
+			client.SendMessage(format("&cPlayer not found: %s", username));
 			return;
 		}
 
@@ -275,7 +275,7 @@ class NotesCommand : Command {
 			info = server.GetPlayerInfo(username);
 		}
 		catch (ServerException e) {
-			client.SendMessage(format("&c%s", username));
+			client.SendMessage(format("&cPlayer not found: %s", username));
 			return;
 		}
 
@@ -308,7 +308,7 @@ class MuteCommand : Command {
 			info = server.GetPlayerInfo(args[0]);
 		}
 		catch (ServerException e) {
-			client.SendMessage(format("&c%s", e.msg));
+			client.SendMessage(format("&cPlayer not found: %s", e.msg));
 			return;
 		}
 
@@ -355,7 +355,7 @@ class TempMuteCommand : Command {
 			info = server.GetPlayerInfo(args[0]);
 		}
 		catch (ServerException e) {
-			client.SendMessage(format("&c%s", e.msg));
+			client.SendMessage(format("&cPlayer not found: %s", e.msg));
 			return;
 		}
 
@@ -404,7 +404,7 @@ class UnmuteCommand : Command {
 			info = server.GetPlayerInfo(args[0]);
 		}
 		catch (ServerException e) {
-			client.SendMessage(format("&c%s", e.msg));
+			client.SendMessage(format("&cPlayer not found: %s", e.msg));
 			return;
 		}
 
