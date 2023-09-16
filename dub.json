@@ -3,15 +3,12 @@
 		"yeti0904"
 	],
 	"buildOptions": [
-		"inline",
-		"optimize",
 		"lowmem"
 	],
 	"copyright": "Copyright © 2023, yeti0904",
 	"dependencies": {
 		"csprng": "~>1.1.2",
-		"fast_noise": "~>1.0.5",
-		"undead": "~>1.1.8"
+		"fast_noise": "~>1.0.5"
 	},
 	"description": "A Minecraft Classic server software",
 	"license": "GPL-3.0-or-later",

@@ -50,9 +50,9 @@ class CuboidCommand : Command {
 
 		auto blockdb = new BlockDB(client.world.GetName());
 
-		auto stream = blockdb.OpenOutputStreamAppend();
-		auto buffer = new ubyte[blockdb.blockEntrySize];
-		auto sendPackets = volume < 10000;
+		auto buffer      = new ubyte[](blockdb.blockEntrySize);
+		bool sendPackets = volume < 10000;
+		
 		for (ushort y = start.y; y <= end.y; ++ y) {
 			for (ushort z = start.z; z <= end.z; ++ z) {
 				for (ushort x = start.x; x <= end.x; ++ x) {
@@ -72,12 +72,11 @@ class CuboidCommand : Command {
 					entry.previousBlock = oldBlock;
 					entry.time          = Clock.currTime().toUnixTime();
 					entry.extra         = "(Drawn)";
-					blockdb.AppendEntry(stream, entry, buffer);
+					blockdb.AppendEntry(entry);
 				}
 			}
 		}
-		stream.flush();
-		stream.close();
+		
 		if (!sendPackets) {
 			foreach (i, player ; client.world.clients) {
 				if (player is null) {
