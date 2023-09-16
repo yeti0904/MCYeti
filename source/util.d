@@ -39,8 +39,13 @@ string BytesToString(ubyte[] bytes) {
 	return ret;
 }
 
+string CurrentTimeString() {
+	auto time = Clock.currTime();
+	return format("%.2d:%.2d:%.2d", time.hour, time.minute, time.second);
+}
+
 void Log(Char, A...)(in Char[] fmt, A args) {
-	auto str = format(fmt, args);
+	auto str = format("[%s] %s", CurrentTimeString(), format(fmt, args));
 
 	writeln(str);
 
