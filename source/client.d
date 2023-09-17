@@ -269,12 +269,16 @@ class Client : Player {
 						dirName(thisExePath()), username
 					);
 
+					string oldIP = ip;
+
 					if (exists(infoPath)) {
 						InfoFromJSON(parseJSON(readText(infoPath)));
 					}
 					else {
 						SaveInfo();
 					}
+
+					ip = oldIP;
 
 					// new player info stuff
 					/*if ("colour" !in info) {
