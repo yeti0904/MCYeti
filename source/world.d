@@ -180,6 +180,7 @@ class World {
 		
 		if (server.config.serverID != lastServerID) {
 			SetBackupIntervalMinutes(dontBackup);
+			MarkChanged();
 
 			Log("[WARN] Backup settings for world \"%s\" were reset", fileName);
 		}
