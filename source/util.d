@@ -122,13 +122,13 @@ string DateToday(bool dashes = false) {
 
 // ported from Helper.java of https://github.com/minecraft8997/BanAllShadBot
 string DiffTime(ulong deltaSeconds) {
-	ulong days = deltaSeconds / 86400;
-	deltaSeconds -= days * 86400;
-	ulong hours = deltaSeconds / 3600;
-	deltaSeconds -= hours * 3600;
-	ulong minutes = deltaSeconds / 60;
-	deltaSeconds -= minutes * 60;
-	ulong seconds = deltaSeconds;
+	ulong days     = deltaSeconds / 86400;
+	deltaSeconds  -= days * 86400;
+	ulong hours    = deltaSeconds / 3600;
+	deltaSeconds  -= hours * 3600;
+	ulong minutes  = deltaSeconds / 60;
+	deltaSeconds  -= minutes * 60;
+	ulong seconds  = deltaSeconds;
 
 	string result = "";
 	bool needToAppendSpace = false;

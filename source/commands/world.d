@@ -110,7 +110,7 @@ class GotoCommand : Command {
 
 		auto world = server.GetWorld(args[0]);
 
-		if (world.GetPermissionVisit() > client.info["rank"].integer) {
+		if (world.GetPermissionVisit() > client.rank) {
 			client.SendMessage("&cYou can't go to this map");
 			return;
 		}
@@ -497,5 +497,23 @@ class MapCommand : Command {
 				client.SendMessage("&cUnknown subcommand");
 			}
 		}
+	}
+}
+
+class SaveAllCommand : Command {
+	this() {
+		name = "saveall";
+		help = [
+			"&a/saveall",
+			"&eSaves all maps"
+		];
+		argumentsRequired = 0;
+		permission        = 0xE0;
+		category          = CommandCategory.World;
+	}
+
+	override void Run(Server server, Client client, string[] args) {
+		server.SaveAll();
+		client.SendMessage("&aSaved all maps");
 	}
 }

@@ -13,6 +13,7 @@ import mcyeti.app;
 import mcyeti.types;
 import mcyeti.world;
 import mcyeti.client;
+import mcyeti.player;
 import mcyeti.server;
 import mcyeti.commandManager;
 
@@ -145,27 +146,27 @@ class InfoCommand : Command {
 			username = args[0];
 		}
 
-		JSONValue info;
+		Player player;
 
 		try {
-			info = server.GetPlayerInfo(username);
+			player = server.GetPlayerInfo(args[0]);
 		}
 		catch (ServerException e) {
-			client.SendMessage(format("&cPlayer not found: %s", username));
+			client.SendMessage(format("&c%s", e.msg));
 			return;
 		}
 
-		string displayName = Client.GetDisplayName(username, info, true);
+		string displayName = player.GetDisplayName();
 
 		client.SendMessage(format("&aInfo for &e%s", displayName));
 		client.SendMessage(
 			format(
 				"  &aRank:&e %s",
-				server.GetRankName(cast(ubyte) info["rank"].integer)
+				server.GetRankName(cast(ubyte) player.rank)
 			)
 		);
 
-		if (info["banned"].boolean) {
+		if (player.banned) {
 			client.SendMessage("  &aPlayer is banned");
 		}
 

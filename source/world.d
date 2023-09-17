@@ -165,15 +165,19 @@ class World {
 
 		if (formatVersion == 2) {
 			bool doBackups = data[16] > 0;
+			
 			if (doBackups) {
 				SetBackupIntervalMinutes(60); // will be backing up hourly
-			} else {
+			}
+			else {
 				SetBackupIntervalMinutes(dontBackup);
 			}
 		}
+		
 		if (formatVersion >= 1) {
 			formatVersion = latestVersion;
 		}
+		
 		if (server.config.serverID != lastServerID) {
 			SetBackupIntervalMinutes(dontBackup);
 

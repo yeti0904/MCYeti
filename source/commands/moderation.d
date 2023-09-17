@@ -15,6 +15,7 @@ import mcyeti.util;
 import mcyeti.types;
 import mcyeti.world;
 import mcyeti.client;
+import mcyeti.player;
 import mcyeti.server;
 import mcyeti.blockdb;
 import mcyeti.commandManager;
@@ -57,24 +58,21 @@ class BanCommand : Command {
 	override void Run(Server server, Client client, string[] args) {
 		auto username = args[0];
 
-		JSONValue info;
+		Player player;
 
 		try {
-			info = server.GetPlayerInfo(username);
+			player = server.GetPlayerInfo(args[0]);
 		}
 		catch (ServerException e) {
-			client.SendMessage(format("&cPlayer not found: %s", username));
+			client.SendMessage(format("&c%s", e.msg));
 			return;
 		}
 
-		info["banned"] = true;
-		info["infractions"].array ~= JSONValue(
-			format(
-				"Banned by %s on %s", client.username, DateToday()
-			)
+		player.banned = true;
+		player.infractions ~= format(
+			"Banned by %s on %s", client.username, DateToday()
 		);
-
-		server.SavePlayerInfo(username, info);
+		player.SaveInfo();
 
 		try {
 			server.Kick(username, "You're banned");
@@ -102,24 +100,21 @@ class UnbanCommand : Command {
 	override void Run(Server server, Client client, string[] args) {
 		auto username = args[0];
 
-		JSONValue info;
+		Player player;
 
 		try {
-			info = server.GetPlayerInfo(username);
+			player = server.GetPlayerInfo(args[0]);
 		}
 		catch (ServerException e) {
-			client.SendMessage(format("&cPlayer not found: %s", username));
+			client.SendMessage(format("&c%s", e.msg));
 			return;
 		}
 
-		info["banned"] = false;
-		info["infractions"].array ~= JSONValue(
-			format(
-				"Unbanned by %s on %s", client.username, DateToday()
-			)
+		player.banned = false;
+		player.infractions ~= format(
+			"Unbanned by %s on %s", client.username, DateToday()
 		);
-
-		server.SavePlayerInfo(username, info);
+		player.SaveInfo();
 
 		client.SendMessage("&aPlayer unbanned");
 	}
@@ -219,23 +214,20 @@ class WarnCommand : Command {
 		
 		reason = reason.strip();
 
-		JSONValue info;
+		Player player;
 
 		try {
-			info = server.GetPlayerInfo(username);
+			player = server.GetPlayerInfo(args[0]);
 		}
 		catch (ServerException e) {
-			client.SendMessage(format("&cPlayer not found: %s", username));
+			client.SendMessage(format("&c%s", e.msg));
 			return;
 		}
 
-		info["infractions"].array ~= JSONValue(
-			format(
-				"Warned by %s on %s: %s", client.username, DateToday(), reason
-			)
+		player.infractions ~= format(
+			"Warned by %s on %s: %s", client.username, DateToday(), reason
 		);
-
-		server.SavePlayerInfo(username, info);
+		player.SaveInfo();
 
 		server.SendGlobalMessage(
 			format(
@@ -269,22 +261,20 @@ class NotesCommand : Command {
 			username = args[0];
 		}
 
-		JSONValue info;
+		Player player;
 
 		try {
-			info = server.GetPlayerInfo(username);
+			player = server.GetPlayerInfo(args[0]);
 		}
 		catch (ServerException e) {
-			client.SendMessage(format("&cPlayer not found: %s", username));
+			client.SendMessage(format("&c%s", e.msg));
 			return;
 		}
 
 		client.SendMessage(format("&eNotes for user %s", username));
 
-		foreach (ref note ; info["infractions"].array) {
-			string noteString = note.str;
-
-			client.SendMessage(format("  &c%s", noteString));
+		foreach (ref note ; player.infractions) {
+			client.SendMessage(format("  &c%s", note));
 		}
 	}
 }
@@ -302,34 +292,30 @@ class MuteCommand : Command {
 	}
 
 	override void Run(Server server, Client client, string[] args) {
-		JSONValue info;
+		Player player;
 
 		try {
-			info = server.GetPlayerInfo(args[0]);
+			player = server.GetPlayerInfo(args[0]);
 		}
 		catch (ServerException e) {
-			client.SendMessage(format("&cPlayer not found: %s", e.msg));
+			client.SendMessage(format("&c%s", e.msg));
 			return;
 		}
 
 		string reason = args[1 .. $].join(" ").strip();
 
-		info["muted"]    = true;
-		info["muteTime"] = (cast(long) 1 << 63) - 1;
+		player.muted    = true;
+		player.muteTime = (cast(long) 1 << 63) - 1;
 		
-		info["infractions"].array ~= JSONValue(
-			format(
-				"Muted by %s on %s: %s", client.username, DateToday(), reason
-			)
+		player.infractions ~= format(
+			"Muted by %s on %s: %s", client.username, DateToday(), reason
 		);
-
-		server.SavePlayerInfo(args[0], info);
+		player.SaveInfo();
 
 		if (server.PlayerOnline(args[0])) {
-			auto player = server.GetPlayer(args[0]);
+			auto thisPlayer = server.GetPlayer(args[0]);
 
-			player.info = info;
-			player.SendMessage("&eYou have been muted");
+			thisPlayer.SendMessage("&eYou have been muted");
 		}
 
 		client.SendMessage("&ePlayer muted");
@@ -349,36 +335,30 @@ class TempMuteCommand : Command {
 	}
 
 	override void Run(Server server, Client client, string[] args) {
-		JSONValue info;
+		Player player;
 
 		try {
-			info = server.GetPlayerInfo(args[0]);
+			player = server.GetPlayerInfo(args[0]);
 		}
 		catch (ServerException e) {
-			client.SendMessage(format("&cPlayer not found: %s", e.msg));
+			client.SendMessage(format("&c%s", e.msg));
 			return;
 		}
-
+		
 		string reason = args[2 .. $].join(" ").strip();
 
 		auto time = Clock.currTime().toUnixTime();
 
-		info["muted"]    = true;
-		info["muteTime"] = time + StringAsTimespan(args[1]);
+		player.muted    = true;
+		player.muteTime = time + StringAsTimespan(args[1]);
 		
-		info["infractions"].array ~= JSONValue(
-			format(
-				"Muted by %s on %s: %s", client.username, DateToday(), reason
-			)
+		player.infractions ~= format(
+			"Muted by %s on %s: %s", client.username, DateToday(), reason
 		);
-
-		server.SavePlayerInfo(args[0], info);
+		player.SaveInfo();
 
 		if (server.PlayerOnline(args[0])) {
-			auto player = server.GetPlayer(args[0]);
-
-			player.info = info;
-			player.SendMessage("&eYou have been muted");
+			server.GetPlayer(args[0]).ReloadInfo(); // Error: variable `player` is shadowing variable `mcyeti.commands.moderation.MuteCommand.Run.player`
 		}
 
 		client.SendMessage("&ePlayer muted");
@@ -398,31 +378,26 @@ class UnmuteCommand : Command {
 	}
 
 	override void Run(Server server, Client client, string[] args) {
-		JSONValue info;
+		Player player;
 
 		try {
-			info = server.GetPlayerInfo(args[0]);
+			player = server.GetPlayerInfo(args[0]);
 		}
 		catch (ServerException e) {
-			client.SendMessage(format("&cPlayer not found: %s", e.msg));
+			client.SendMessage(format("&c%s", e.msg));
 			return;
 		}
 
-		info["muted"] = false;
+		player.muted = false;
 		
-		info["infractions"].array ~= JSONValue(
-			format(
-				"Unmuted by %s on %s", client.username, DateToday()
-			)
+		player.infractions ~= format(
+			"Unmuted by %s on %s", client.username, DateToday()
 		);
 
-		server.SavePlayerInfo(args[0], info);
+		player.SaveInfo();
 
 		if (server.PlayerOnline(args[0])) {
-			auto player = server.GetPlayer(args[0]);
-
-			player.info = info;
-			player.SendMessage("&eYou have been unmuted");
+			server.GetPlayer(args[0]).ReloadInfo();
 		}
 
 		client.SendMessage("&ePlayer unmuted");
