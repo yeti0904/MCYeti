@@ -10,7 +10,6 @@ import std.string;
 import std.datetime;
 import std.algorithm;
 import core.stdc.stdlib;
-import undead.stream;
 import mcyeti.util;
 import mcyeti.types;
 import mcyeti.world;
@@ -111,7 +110,7 @@ class GotoCommand : Command {
 
 		auto world = server.GetWorld(args[0]);
 
-		if (world.GetPermissionVisit() > client.info["rank"].integer) {
+		if (world.GetPermissionVisit() > client.rank) {
 			client.SendMessage("&cYou can't go to this map");
 			return;
 		}
@@ -189,12 +188,9 @@ class BlockInfoCommand : Command {
 
 		client.SendMessage("&eRetrieving block change records...");
 
-		auto stream = blockdb.OpenInputStream();
-		blockdb.SkipMetadata(stream);
-		auto buffer = new ubyte[blockdb.blockEntrySize];
 		for (ulong i = 0; i < blockdb.GetEntryAmount(); ++ i) {
-			auto entry = blockdb.NextEntry(stream, buffer);
-			if (entry.x != pos.x || entry.y != pos.y || entry.z != pos.z) {
+			auto entry = blockdb.GetEntry(i);
+			if ((entry.x != pos.x) || (entry.y != pos.y) || (entry.z != pos.z)) {
 				continue;
 			}
 
@@ -501,5 +497,23 @@ class MapCommand : Command {
 				client.SendMessage("&cUnknown subcommand");
 			}
 		}
+	}
+}
+
+class SaveAllCommand : Command {
+	this() {
+		name = "saveall";
+		help = [
+			"&a/saveall",
+			"&eSaves all maps"
+		];
+		argumentsRequired = 0;
+		permission        = 0xE0;
+		category          = CommandCategory.World;
+	}
+
+	override void Run(Server server, Client client, string[] args) {
+		server.SaveAll();
+		client.SendMessage("&aSaved all maps");
 	}
 }

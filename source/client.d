@@ -19,6 +19,7 @@ import mcyeti.util;
 import mcyeti.types;
 import mcyeti.world;
 import mcyeti.server;
+import mcyeti.player;
 import mcyeti.blockdb;
 import mcyeti.protocol;
 import mcyeti.commandManager;
@@ -33,15 +34,12 @@ struct ClipboardItem {
 	ushort block;
 }
 
-class Client {
+class Client : Player {
 	Socket          socket;
-	string          ip;
-	string          username;
 	bool            authenticated;
 	ubyte[]         inBuffer;
 	ubyte[]         outBuffer;
 	World           world;
-	JSONValue       info;
 	Vec3!ushort[]   marks;
 	uint            marksWaiting;
 	MarkCallback    markCallback;
@@ -82,26 +80,6 @@ class Client {
 
 	string GetClientName() {
 		return cpeSupported? clientName : "Minecraft Classic";
-	}
-
-	string GetDisplayName(bool includeTitle = false) {
-		return Client.GetDisplayName(username, info, includeTitle);
-	}
-
-	static string GetDisplayName(string username, JSONValue pinfo, bool includeTitle = false) {
-		string ret;
-
-		if (includeTitle && (pinfo["title"].str != "")) {
-			ret ~= format("&f[%s&f] ", pinfo["title"].str);
-		}
-		
-		ret ~= format(
-			"&%s%s",
-			pinfo["colour"].str,
-			pinfo["nickname"].str == ""? username : pinfo["nickname"].str
-		);
-
-		return ret;
 	}
 
 	Vec3!float GetPosition() {
@@ -161,15 +139,6 @@ class Client {
 
 		socket.blocking = false;
 		return true;
-	}
-
-	void SaveInfo() {
-		string infoPath = format(
-			"%s/players/%s.json",
-			dirName(thisExePath()), username
-		);
-
-		std.file.write(infoPath, info.toPrettyString());
 	}
 
 	void SendWorld(World world, Server server, bool registerNewClient = true) {
@@ -240,14 +209,12 @@ class Client {
 	}
 
 	void Update(Server server) {
-		if (info.type != JSONType.null_) {
-			auto time = Clock.currTime().toUnixTime();
+		auto time = Clock.currTime().toUnixTime();
 
-			if (info["muted"].boolean && (info["muteTime"].integer - time < 0)) {
-				SendMessage("&eYou are no longer muted");
-				info["muted"] = false;
-				SaveInfo();
-			}
+		if (muted && (muteTime - time < 0)) {
+			SendMessage("&eYou are no longer muted");
+			muted = false;
+			SaveInfo();
 		}
 
 		bool notEnoughData = false;
@@ -297,24 +264,24 @@ class Client {
 					}
 					
 					// set up info
-					info = parseJSON("{}");
-					info["rank"]   = 0x00;
-					info["banned"] = false;
-
 					string infoPath = format(
 						"%s/players/%s.json",
 						dirName(thisExePath()), username
 					);
 
+					string oldIP = ip;
+
 					if (exists(infoPath)) {
-						info = parseJSON(readText(infoPath));
+						InfoFromJSON(parseJSON(readText(infoPath)));
 					}
 					else {
 						SaveInfo();
 					}
 
+					ip = oldIP;
+
 					// new player info stuff
-					if ("colour" !in info) {
+					/*if ("colour" !in info) {
 						info["colour"] = "f";
 					}
 					if ("title" !in info) {
@@ -328,15 +295,16 @@ class Client {
 					}
 					if ("muted" !in info) {
 						info["muted"] = false;
-					}
+					} // TODO
+					*/
 					SaveInfo();
 
-					if (info["banned"].boolean) {
+					if (banned) {
 						server.Kick(this, "You're banned!");
 						return;
 					}
 
-					if (info["muted"].boolean) {
+					if (muted) {
 						SendMessage("&eYou are muted");
 						return;
 					}
@@ -346,7 +314,7 @@ class Client {
 					);
 
 					if (server.config.owner == username) {
-						info["rank"] = 0xF0;
+						rank = 0xF0;
 						SaveInfo();
 					}
 
@@ -379,7 +347,7 @@ class Client {
 
 					bool resetBlock = false;
 
-					if (info["rank"].integer < world.GetPermissionBuild()) {
+					if (rank < world.GetPermissionBuild()) {
 						SendMessage("&cYou can't build here");
 						resetBlock = true;
 					}
@@ -444,7 +412,7 @@ class Client {
 						""
 					);
 
-					blockdb.AppendSingleEntry(entry);
+					blockdb.AppendEntry(entry);
 					break;
 				}
 				case C2S_Position.pid: {
@@ -501,7 +469,7 @@ class Client {
 					packet.FromData(inBuffer);
 					inBuffer = inBuffer[packet.GetSize() .. $];
 
-					if (info["muted"].boolean) {
+					if (muted) {
 						SendMessage("&eYou are muted");
 						return;
 					}
