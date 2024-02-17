@@ -1,0 +1,16 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/mcyeti
+mcyeti.so
+mcyeti.dylib
+mcyeti.dll
+mcyeti.a
+mcyeti.lib
+mcyeti-test-*
+*.exe
+*.pdb
+*.o
+*.obj
+*.lst
