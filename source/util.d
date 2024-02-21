@@ -24,7 +24,7 @@ string CurrentTimeString() {
 void Log(Char, A...)(in Char[] fmt, A args) {
 	auto str = format("[%s] %s", CurrentTimeString(), format(fmt, args));
 
-	printTo.writeln(str);
+	stdout.writeln(str);
 
 	version (Windows) {
 		stdout.flush();

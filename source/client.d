@@ -2,6 +2,7 @@ module mcyeti.client;
 
 import std.socket;
 import std.concurrency;
+import mcyeti.util;
 import mcyeti.server;
 import mcyeti.protocol;
 
@@ -22,19 +23,19 @@ class Client {
 		active = true;
 	}
 
-	static void ThreadWorker(Tid parentTid, Socket socket) {
-		auto client = new Client(socket);
+	static void ThreadWorker(Tid parentTid, immutable Socket socket) {
+		auto client = new Client(cast(Socket) socket);
 
 		while (client.active) {
 			receive(
-				(ServerTickMessage) {
+				(ServerTickMessage msg) {
 					client.Update();
 				},
 				(ClientSendMessage msg) {
-					SendData(msg.packet.CreateData());
+					client.SendData(msg.packet.CreateData());
 				},
-				(ClientEndMessage) {
-					return;
+				(ClientEndMessage msg) {
+					client.active = false;
 				}
 			);
 		}

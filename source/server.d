@@ -1,6 +1,9 @@
 module mcyeti.server;
 
 import std.stdio;
+import std.socket;
+import std.concurrency;
+import core.atomic;
 import mcyeti.util;
 import mcyeti.client;
 
@@ -11,6 +14,12 @@ struct ServerTickMessage {}
 struct ServerConfig {
 	string ip;
 	ushort port;
+}
+
+class ServerException : Exception {
+	this(string msg = "", string file = __FILE__, size_t line = __LINE__) {
+		super(msg, file, line);
+	}
 }
 
 class Server {
@@ -34,6 +43,10 @@ class Server {
 		return instance;
 	}
 
+	static void IncTicks() {
+		atomicOp!"+="(serverTicks, 1);
+	}
+
 	void Init() {
 		assert(!running);
 
@@ -51,7 +64,7 @@ class Server {
 			socket.bind(new InternetAddress(config.ip, config.port));
 		}
 		catch (SocketOSException e) {
-			stderr.writefln("Failed to bind socket: %s", e.msg);
+			throw new ServerException(e.msg);
 		}
 
 		socket.listen(50);
@@ -61,7 +74,7 @@ class Server {
 	}
 
 	void AcceptNewConnection() {
-		bool   accepted = false;
+		bool   accepted = true;
 		Socket newSocket;
 
 		try {
@@ -80,10 +93,14 @@ class Server {
 		if (!accepted) return;
 
 		Log("%s connected to the server", newSocket.remoteAddress.toAddrString());
-		newSocket.socket.blocking = false;
+		newSocket.blocking = false;
+		newSocket.close();
+
+		clients ~= spawn(&Client.ThreadWorker, thisTid(), cast(immutable) newSocket);
 	}
 
 	void Update() {
-		++ serverTicks;
+		IncTicks();
+		AcceptNewConnection();
 	}
 }
