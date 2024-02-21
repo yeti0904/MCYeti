@@ -240,7 +240,9 @@ class LevelsCommand : Command {
 		client.SendMessage("&eAvailable levels:");
 
 		foreach (entry ; dirEntries(folder, SpanMode.shallow)) {
-			string name = baseName(entry.name).stripExtension();
+			string name = baseName(entry.name);
+			if (endsWith(name, ".json")) continue;
+			name = name.stripExtension();
 
 			client.SendMessage(format("  &a%s", name));
 
