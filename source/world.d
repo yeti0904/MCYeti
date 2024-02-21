@@ -4,6 +4,7 @@ import std.conv;
 import std.file;
 import std.math;
 import std.path;
+import std.json;
 import std.uuid;
 import std.stdio;
 import std.format;
@@ -164,17 +165,22 @@ class World {
 
 		if (formatVersion == 2) {
 			bool doBackups = data[16] > 0;
+			
 			if (doBackups) {
 				SetBackupIntervalMinutes(60); // will be backing up hourly
-			} else {
+			}
+			else {
 				SetBackupIntervalMinutes(dontBackup);
 			}
 		}
+		
 		if (formatVersion >= 1) {
 			formatVersion = latestVersion;
 		}
+		
 		if (server.config.serverID != lastServerID) {
 			SetBackupIntervalMinutes(dontBackup);
+			MarkChanged();
 
 			Log("[WARN] Backup settings for world \"%s\" were reset", fileName);
 		}
@@ -190,8 +196,9 @@ class World {
 		try {
 			mkdir(path);
 		}
-		catch (Exception) { // FileException on POSIX and WindowsException on Windows
-		}
+		// hopefully this doesn't cause hell :(
+		catch (Exception) {}
+		// FileException on POSIX and WindowsException on Windows
 	}
 
 	void Save(Server server, bool isBackup = false) {
@@ -214,12 +221,17 @@ class World {
 				foreach (d; saves) {
 					string name = baseName(d.name).stripExtension();
 					int backupID;
+					
 					try {
 						backupID = to!int(name);
-					} catch (ConvException) {
+					}
+					catch (ConvException) {
 						continue;
 					}
-					if (backupID < 1) continue;
+					
+					if (backupID < 1) {
+						continue;
+					}
 
 					if (backupID > maxID) {
 						maxID = backupID;
@@ -227,26 +239,27 @@ class World {
 				}
 
 				worldPath ~= to!string(maxID + 1) ~ ".ylv";
-			} else {
+			}
+			else {
 				worldPath ~= "/worlds/" ~ name ~ ".ylv";
 			}
 
 			auto file = File(worldPath, "wb");
 
 			ubyte[] metadata =
-			size.x.nativeToBigEndian() ~
-			size.y.nativeToBigEndian() ~
-			size.z.nativeToBigEndian() ~
-			spawn.x.nativeToBigEndian() ~
-			spawn.y.nativeToBigEndian() ~
-			spawn.z.nativeToBigEndian() ~
-			[
-				permissionBuild,
-				permissionVisit
-			] ~
-			formatVersion.nativeToBigEndian() ~
-			backupIntervalMinutes.nativeToBigEndian() ~ // setting this ignoring formatVersion
-			server.config.serverID.data; // and this as well. it's intended and is not a bug
+				size.x.nativeToBigEndian() ~
+				size.y.nativeToBigEndian() ~
+				size.z.nativeToBigEndian() ~
+				spawn.x.nativeToBigEndian() ~
+				spawn.y.nativeToBigEndian() ~
+				spawn.z.nativeToBigEndian() ~
+				[
+					permissionBuild,
+					permissionVisit
+				] ~
+				formatVersion.nativeToBigEndian() ~
+				backupIntervalMinutes.nativeToBigEndian() ~ // setting this ignoring formatVersion
+				server.config.serverID.data; // and this as well. it's intended and is not a bug
 
 			while (metadata.length < 512) {
 				metadata ~= 0;
@@ -260,7 +273,8 @@ class World {
 
 			if (isBackup) {
 				backupChanged = false;
-			} else {
+			}
+			else {
 				changed = false;
 			}
 		}).start();
@@ -406,6 +420,10 @@ class World {
 
 		clients[id] = client;
 
+		if (client.cpeSupported && client.cpeExtensions.canFind("InstantMOTD")) {
+			client.SendServerIdentification(server, GetMOTD());
+		}
+
 		foreach (i, clienti ; clients) {
 			if (clienti is null) {
 				continue;
@@ -512,6 +530,44 @@ class World {
 		return backupIntervalMinutes;
 	}
 
+	string GetPropertiesPath() {
+		return dirName(thisExePath()) ~ "/worlds/" ~ name ~ ".json";
+	}
+
+	JSONValue GetProperties() {
+		return GetPropertiesPath().readText().parseJSON();
+	}
+
+	void WriteProperties(JSONValue props) {
+		std.file.write(GetPropertiesPath(), props.toString());
+	}
+
+	string GetMOTD() {
+		return GetProperties()["motd"].str;
+	}
+
+	void SetMOTD(Server server, string motd) {
+		auto props    = GetProperties();
+		props["motd"] = motd;
+		WriteProperties(props);
+
+		// send new motd to clients
+		foreach (ref client ; clients) {
+			if (client is null) {
+				continue;
+			}
+
+			if (
+				!client.cpeSupported ||
+				!client.cpeExtensions.canFind("InstantMOTD")
+			) {
+				continue;
+			}
+
+			client.SendServerIdentification(server, motd);
+		}
+	}
+	
 	private void MarkChanged() {
 		changed = true;
 		backupChanged = true;

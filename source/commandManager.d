@@ -87,6 +87,11 @@ class CommandManager {
 		LoadCommand(new UnmuteCommand());
 		LoadCommand(new SayCommand());
 		LoadCommand(new HighFiveCommand());
+		LoadCommand(new RickRollCommand());
+		LoadCommand(new ClientsCommand());
+		LoadCommand(new MapCommand());
+		LoadCommand(new CPEExtensionsCommand());
+		LoadCommand(new SaveAllCommand());
 	}
 
 	CommandCategory ToCategory(string str) {
@@ -162,7 +167,7 @@ class CommandManager {
 
 		auto command = GetCommand(name);
 
-		return client.info["rank"].integer >= command.permission;
+		return client.rank >= command.permission;
 	}
 
 	void RunCommand(string name, Server server, Client client, string[] args) {

@@ -13,13 +13,17 @@ import std.bitmanip;
 import std.datetime;
 import std.algorithm;
 import std.digest.md;
+import std.datetime.stopwatch;
+import mcyeti.app;
 import mcyeti.util;
 import mcyeti.types;
 import mcyeti.world;
 import mcyeti.server;
+import mcyeti.player;
 import mcyeti.blockdb;
 import mcyeti.protocol;
 import mcyeti.commandManager;
+import mcyeti.cpe.support;
 
 alias MarkCallback = void function(Client, Server, void*);
 
@@ -30,62 +34,52 @@ struct ClipboardItem {
 	ushort block;
 }
 
-class Client {
+class Client : Player {
 	Socket          socket;
-	string          ip;
-	string          username;
 	bool            authenticated;
 	ubyte[]         inBuffer;
 	ubyte[]         outBuffer;
 	World           world;
-	JSONValue       info;
 	Vec3!ushort[]   marks;
 	uint            marksWaiting;
 	MarkCallback    markCallback;
 	ushort          markBlock;
 	void*           markInfo;
 	ClipboardItem[] clipboard;
+	ubyte           messagesSent;
+	StopWatch       automuteTimer;
+
+	bool     cpeSupported;
+	string[] cpeExtensions;
+	uint     cpeExtAmount;
 	
 	private Vec3!float pos;
-	private Dir3D      direction;    
+	private Dir3D      direction;
+	private string     clientName;   
 
-	this(Socket psocket) {
+	this(Socket psocket, Server server) {
 		socket = psocket;
 		ip     = socket.remoteAddress.toAddrString();
 	}
 
-	string GetDisplayName(bool includeTitle = false) {
-		/*string ret;
+	private void SendExtensions() {
+		auto extInfo           = new Bi_ExtInfo();
+		extInfo.appName        = appVersion;
+		extInfo.extensionCount = 0;
 
-		if (includeTitle && (info["title"].str != "")) {
-			ret ~= format("[%s] ", info["title"].str);
+		outBuffer ~= extInfo.CreateData();
+
+		foreach (ref ext ; supportedExtensions) {
+			auto entry       = new Bi_ExtEntry();
+			entry.name       = ext.name;
+			entry.extVersion = ext.extVersion;
+
+			outBuffer ~= entry.CreateData();
 		}
-		
-		ret ~= format(
-			"&%s%s",
-			info["colour"].str,
-			info["nickname"].str == ""? username : info["nickname"].str
-		);
-
-		return ret;*/
-
-		return Client.GetDisplayName(username, info, includeTitle);
 	}
 
-	static string GetDisplayName(string username, JSONValue pinfo, bool includeTitle = false) {
-		string ret;
-
-		if (includeTitle && (pinfo["title"].str != "")) {
-			ret ~= format("&f[%s&f] ", pinfo["title"].str);
-		}
-		
-		ret ~= format(
-			"&%s%s",
-			pinfo["colour"].str,
-			pinfo["nickname"].str == ""? username : pinfo["nickname"].str
-		);
-
-		return ret;
+	string GetClientName() {
+		return cpeSupported? clientName : "Minecraft Classic";
 	}
 
 	Vec3!float GetPosition() {
@@ -147,15 +141,6 @@ class Client {
 		return true;
 	}
 
-	void SaveInfo() {
-		string infoPath = format(
-			"%s/players/%s.json",
-			dirName(thisExePath()), username
-		);
-
-		std.file.write(infoPath, info.toPrettyString());
-	}
-
 	void SendWorld(World world, Server server, bool registerNewClient = true) {
 		auto serialised = world.PackXZY();
 
@@ -208,19 +193,33 @@ class Client {
 		SendMessage("&eMark a block");
 	}
 
-	void Update(Server server) {
-		if (info.type != JSONType.null_) {
-			auto time = Clock.currTime().toUnixTime();
+	void SendServerIdentification(Server server, string motd) {
+		auto identification = new S2C_Identification();
 
-			if (info["muted"].boolean && (info["muteTime"].integer - time < 0)) {
-				SendMessage("&eYou are no longer muted");
-				info["muted"] = false;
-				SaveInfo();
-			}
+		if (motd == "ignored") {
+			motd = server.config.motd;
+		}
+
+		identification.protocolVersion = 0x07;
+		identification.serverName      = server.config.name;
+		identification.motd            = motd;
+		identification.userType        = 0x64;
+
+		outBuffer ~= identification.CreateData();
+	}
+
+	void Update(Server server) {
+		auto time = Clock.currTime().toUnixTime();
+
+		if (muted && (muteTime - time < 0)) {
+			SendMessage("&eYou are no longer muted");
+			muted = false;
+			SaveInfo();
 		}
 
 		bool notEnoughData = false;
-		while (inBuffer.length != 0 && !notEnoughData) {
+		
+		while ((inBuffer.length != 0) && !notEnoughData) {
 			switch (inBuffer[0]) {
 				case C2S_Identification.pid: {
 					auto packet = new C2S_Identification();
@@ -249,7 +248,6 @@ class Client {
 
 					if (server.PlayerOnline(packet.username)) {
 						server.Kick(packet.username, "Connected from another client");
-						return;
 					}
 
 					if (packet.protocolVersion != 0x07) {
@@ -259,25 +257,31 @@ class Client {
 
 					authenticated = true;
 
+					// check if client supports CPE
+					if (packet.unused == 0x42) {
+						cpeSupported = true;
+						SendExtensions();
+					}
+					
 					// set up info
-					info = parseJSON("{}");
-					info["rank"]   = 0x00;
-					info["banned"] = false;
-
 					string infoPath = format(
 						"%s/players/%s.json",
 						dirName(thisExePath()), username
 					);
 
+					string oldIP = ip;
+
 					if (exists(infoPath)) {
-						info = parseJSON(readText(infoPath));
+						InfoFromJSON(parseJSON(readText(infoPath)));
 					}
 					else {
 						SaveInfo();
 					}
 
+					ip = oldIP;
+
 					// new player info stuff
-					if ("colour" !in info) {
+					/*if ("colour" !in info) {
 						info["colour"] = "f";
 					}
 					if ("title" !in info) {
@@ -291,15 +295,16 @@ class Client {
 					}
 					if ("muted" !in info) {
 						info["muted"] = false;
-					}
+					} // TODO
+					*/
 					SaveInfo();
 
-					if (info["banned"].boolean) {
+					if (banned) {
 						server.Kick(this, "You're banned!");
 						return;
 					}
 
-					if (info["muted"].boolean) {
+					if (muted) {
 						SendMessage("&eYou are muted");
 						return;
 					}
@@ -309,21 +314,16 @@ class Client {
 					);
 
 					if (server.config.owner == username) {
-						info["rank"] = 0xF0;
+						rank = 0xF0;
 						SaveInfo();
 					}
 
-					auto identification = new S2C_Identification();
+					SendServerIdentification(server, server.config.motd);
 
-					identification.protocolVersion = 0x07;
-					identification.serverName      = server.config.name;
-					identification.motd            = server.config.motd;
-					identification.userType        = 0x64;
-
-					outBuffer ~= identification.CreateData();
-
-					// send world
-					server.SendPlayerToWorld(this, server.config.mainLevel);
+					if (!cpeSupported) {
+						// send world
+						server.SendPlayerToWorld(this, server.config.mainLevel);
+					}
 					break;
 				}
 				case C2S_SetBlock.pid: {
@@ -347,7 +347,7 @@ class Client {
 
 					bool resetBlock = false;
 
-					if (info["rank"].integer < world.GetPermissionBuild()) {
+					if (rank < world.GetPermissionBuild()) {
 						SendMessage("&cYou can't build here");
 						resetBlock = true;
 					}
@@ -412,7 +412,7 @@ class Client {
 						""
 					);
 
-					blockdb.AppendSingleEntry(entry);
+					blockdb.AppendEntry(entry);
 					break;
 				}
 				case C2S_Position.pid: {
@@ -469,7 +469,7 @@ class Client {
 					packet.FromData(inBuffer);
 					inBuffer = inBuffer[packet.GetSize() .. $];
 
-					if (info["muted"].boolean) {
+					if (muted) {
 						SendMessage("&eYou are muted");
 						return;
 					}
@@ -525,6 +525,67 @@ class Client {
 						"%s: &f%s", GetDisplayName(true), packet.message
 					);
 					server.SendGlobalMessage(message);
+					break;
+				}
+				////////////////////////////////////////////
+				//                   CPE                  //
+				////////////////////////////////////////////
+				// Abandon all hope all ye who enter here //
+				////////////////////////////////////////////
+				case Bi_ExtInfo.pid: {
+					auto packet = new Bi_ExtInfo();
+
+					if (inBuffer.length < packet.GetSize() + 1) {
+						notEnoughData = true;
+						break;
+					}
+
+					inBuffer = inBuffer[1 .. $];
+
+					packet.FromData(inBuffer);
+					inBuffer = inBuffer[packet.GetSize() .. $];
+
+					clientName = packet.appName;
+
+					cpeExtAmount = packet.extensionCount;
+					break;
+				}
+				case Bi_ExtEntry.pid: {
+					auto packet = new Bi_ExtEntry();
+
+					if (inBuffer.length < packet.GetSize() + 1) {
+						notEnoughData = true;
+						break;
+					}
+
+					inBuffer = inBuffer[1 .. $];
+
+					packet.FromData(inBuffer);
+					inBuffer = inBuffer[packet.GetSize() .. $];
+
+					Extension ext;
+					bool      addExt = true;
+					
+					try {
+						ext = GetExtension(packet.name);
+					}
+					catch (ProtocolException) {
+						addExt = false;
+					}
+
+					if (ext.extVersion != packet.extVersion) {
+						addExt = false;
+					}
+
+					if (addExt) {
+						cpeExtensions ~= packet.name;
+					}
+
+					-- cpeExtAmount;
+					if (cpeExtAmount == 0) {
+						// send world
+						server.SendPlayerToWorld(this, server.config.mainLevel);
+					}
 					break;
 				}
 				default: {

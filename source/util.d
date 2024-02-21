@@ -39,8 +39,13 @@ string BytesToString(ubyte[] bytes) {
 	return ret;
 }
 
+string CurrentTimeString() {
+	auto time = Clock.currTime();
+	return format("%.2d:%.2d:%.2d", time.hour, time.minute, time.second);
+}
+
 void Log(Char, A...)(in Char[] fmt, A args) {
-	auto str = format(fmt, args);
+	auto str = format("[%s] %s", CurrentTimeString(), format(fmt, args));
 
 	writeln(str);
 
@@ -116,14 +121,14 @@ string DateToday(bool dashes = false) {
 }
 
 // ported from Helper.java of https://github.com/minecraft8997/BanAllShadBot
-public static string DiffTime(ulong deltaSeconds) {
-	ulong days = deltaSeconds / 86400;
-	deltaSeconds -= days * 86400;
-	ulong hours = deltaSeconds / 3600;
-	deltaSeconds -= hours * 3600;
-	ulong minutes = deltaSeconds / 60;
-	deltaSeconds -= minutes * 60;
-	ulong seconds = deltaSeconds;
+string DiffTime(ulong deltaSeconds) {
+	ulong days     = deltaSeconds / 86400;
+	deltaSeconds  -= days * 86400;
+	ulong hours    = deltaSeconds / 3600;
+	deltaSeconds  -= hours * 3600;
+	ulong minutes  = deltaSeconds / 60;
+	deltaSeconds  -= minutes * 60;
+	ulong seconds  = deltaSeconds;
 
 	string result = "";
 	bool needToAppendSpace = false;

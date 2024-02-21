@@ -13,6 +13,7 @@ import mcyeti.app;
 import mcyeti.types;
 import mcyeti.world;
 import mcyeti.client;
+import mcyeti.player;
 import mcyeti.server;
 import mcyeti.commandManager;
 
@@ -145,27 +146,27 @@ class InfoCommand : Command {
 			username = args[0];
 		}
 
-		JSONValue info;
+		Player player;
 
 		try {
-			info = server.GetPlayerInfo(username);
+			player = server.GetPlayerInfo(args[0]);
 		}
 		catch (ServerException e) {
-			client.SendMessage(format("&c%s", username));
+			client.SendMessage(format("&c%s", e.msg));
 			return;
 		}
 
-		string displayName = Client.GetDisplayName(username, info, true);
+		string displayName = player.GetDisplayName();
 
 		client.SendMessage(format("&aInfo for &e%s", displayName));
 		client.SendMessage(
 			format(
 				"  &aRank:&e %s",
-				server.GetRankName(cast(ubyte) info["rank"].integer)
+				server.GetRankName(cast(ubyte) player.rank)
 			)
 		);
 
-		if (info["banned"].boolean) {
+		if (player.banned) {
 			client.SendMessage("  &aPlayer is banned");
 		}
 
@@ -309,6 +310,92 @@ class RulesCommand : Command {
 
 		foreach (ref line ; readText(rulesPath).split("\n")) {
 			client.SendMessage(format("&e%s", line));
+		}
+	}
+}
+class RickRollCommand : Command {
+	this() {
+		name = "rickroll";
+		help = [
+			"&a/rickroll",
+			"&eShows you the rickroll link"
+		];
+		argumentsRequired = 0;
+		permission        = 0x00;
+		category          = CommandCategory.Info;
+	}
+
+	override void Run(Server server, Client client, string[] args) {
+		client.SendMessage("&ehttps://youtube.com/watch?v=dQw4w9WgXcQ");
+	}
+}
+
+class ClientsCommand : Command {
+	this() {
+		name = "clients";
+		help = [
+			"&a/clients",
+			"&eShows what client everyone is using"
+		];
+		argumentsRequired = 0;
+		permission        = 0x00;
+		category          = CommandCategory.Info;
+	}
+
+	override void Run(Server server, Client client, string[] args) {
+		string[][string] clients;
+
+		foreach (ref iclient ; server.clients) {
+			if (!iclient.authenticated) {
+				continue;
+			}
+			
+			if (iclient.GetClientName() !in clients) {
+				clients[iclient.GetClientName()] = [];
+			}
+			
+			clients[iclient.GetClientName()] ~= iclient.username;
+		}
+
+		client.SendMessage("&ePlayers using:");
+		foreach (clientName, users ; clients) {
+			string msg = format("&e  %s:&f ", clientName);
+
+			foreach (i, ref user ; users) {
+				msg ~= user;
+
+				if (i < users.length - 1) {
+					msg ~= ", ";
+				}
+			}
+
+			client.SendMessage(msg);
+		}
+	}
+}
+
+class CPEExtensionsCommand : Command {
+	this() {
+		name = "cpeextensions";
+		help = [
+			"&a/cpeextensions",
+			"&eShows all the extensions that both you and the server have"
+		];
+		argumentsRequired = 0;
+		permission        = 0x00;
+		category          = CommandCategory.Info;
+	}
+
+	override void Run(Server server, Client client, string[] args) {
+		if (!client.cpeSupported) {
+			client.SendMessage("&cYou don't have CPE");
+			return;
+		}
+
+		client.SendMessage("&cExtensions:");
+
+		foreach (ref ext ; client.cpeExtensions) {
+			client.SendMessage(format("  &b%s", ext));
 		}
 	}
 }

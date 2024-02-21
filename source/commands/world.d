@@ -10,7 +10,6 @@ import std.string;
 import std.datetime;
 import std.algorithm;
 import core.stdc.stdlib;
-import undead.stream;
 import mcyeti.util;
 import mcyeti.types;
 import mcyeti.world;
@@ -111,7 +110,7 @@ class GotoCommand : Command {
 
 		auto world = server.GetWorld(args[0]);
 
-		if (world.GetPermissionVisit() > client.info["rank"].integer) {
+		if (world.GetPermissionVisit() > client.rank) {
 			client.SendMessage("&cYou can't go to this map");
 			return;
 		}
@@ -189,12 +188,9 @@ class BlockInfoCommand : Command {
 
 		client.SendMessage("&eRetrieving block change records...");
 
-		auto stream = blockdb.OpenInputStream();
-		blockdb.SkipMetadata(stream);
-		auto buffer = new ubyte[blockdb.blockEntrySize];
 		for (ulong i = 0; i < blockdb.GetEntryAmount(); ++ i) {
-			auto entry = blockdb.NextEntry(stream, buffer);
-			if (entry.x != pos.x || entry.y != pos.y || entry.z != pos.z) {
+			auto entry = blockdb.GetEntry(i);
+			if ((entry.x != pos.x) || (entry.y != pos.y) || (entry.z != pos.z)) {
 				continue;
 			}
 
@@ -411,6 +407,7 @@ class BackupCommand : Command {
 
 	override void Run(Server server, Client client, string[] args) {
 		World world = client.world;
+		
 		switch (args[0]) {
 			case "info": {
 				uint interval = world.GetBackupIntervalMinutes();
@@ -418,8 +415,12 @@ class BackupCommand : Command {
 					client.SendMessage("&eThe current backup interval is &cnever");
 					return;
 				}
-				client.SendMessage(format("&eThe current backup interval is &f%s (=%d minute(s))",
-											DiffTime(interval * 60L), interval));
+				client.SendMessage(
+					format(
+						"&eThe current backup interval is &f%s (=%d minute(s))",
+						DiffTime(interval * 60L), interval
+					)
+				);
 				break;
 			}
 			case "setinterval": {
@@ -428,6 +429,7 @@ class BackupCommand : Command {
 					return;
 				}
 				uint minutes;
+				
 				try {
 					minutes = to!uint(args[1]);
 				}
@@ -435,12 +437,17 @@ class BackupCommand : Command {
 					client.SendMessage("&cNot an integer");
 					return;
 				}
+				
 				world.SetBackupIntervalMinutes(minutes);
 				string message;
+				
 				if (minutes == 0) {
 					message = "&aThe new interval is &cnever";
-				} else {
-					message = format("&aThe new interval is &f%s", DiffTime(minutes * 60L));
+				}
+				else {
+					message = format(
+						"&aThe new interval is &f%s", DiffTime(minutes * 60L)
+					);
 				}
 				client.SendMessage(message);
 
@@ -455,3 +462,58 @@ class BackupCommand : Command {
 	}
 }
 
+class MapCommand : Command {
+	this() {
+		name = "map";
+		help = [
+			"&a/map motd [motd]",
+			"&eSets the map motd of the world you're in"
+		];
+		argumentsRequired = 1;
+		permission        = 0xE0;
+		category          = CommandCategory.World;
+	}
+
+	override void Run(Server server, Client client, string[] args) {
+		switch (args[0]) {
+			case "motd": {
+				string motd = args[1 .. $].join(" ");
+
+				if (motd.length > 64) {
+					client.SendMessage("&cMOTD too long");
+					return;
+				}
+
+				if (client.world is null) {
+					client.SendMessage("&cNot in a world");
+					return;
+				}
+
+				client.world.SetMOTD(server, motd);
+				client.SendMessage("&eMOTD changed to &b" ~ motd);
+				break;
+			}
+			default: {
+				client.SendMessage("&cUnknown subcommand");
+			}
+		}
+	}
+}
+
+class SaveAllCommand : Command {
+	this() {
+		name = "saveall";
+		help = [
+			"&a/saveall",
+			"&eSaves all maps"
+		];
+		argumentsRequired = 0;
+		permission        = 0xE0;
+		category          = CommandCategory.World;
+	}
+
+	override void Run(Server server, Client client, string[] args) {
+		server.SaveAll();
+		client.SendMessage("&aSaved all maps");
+	}
+}

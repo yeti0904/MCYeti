@@ -14,6 +14,7 @@ import mcyeti.util;
 import mcyeti.types;
 import mcyeti.world;
 import mcyeti.client;
+import mcyeti.player;
 import mcyeti.server;
 import mcyeti.blockdb;
 import mcyeti.protocol;
@@ -32,10 +33,10 @@ class ColourCommand : Command {
 	}
 
 	override void Run(Server server, Client client, string[] args) {
-		JSONValue info;
+		Player player;
 
 		try {
-			info = server.GetPlayerInfo(args[0]);
+			player = server.GetPlayerInfo(args[0]);
 		}
 		catch (ServerException e) {
 			client.SendMessage(format("&c%s", e.msg));
@@ -49,22 +50,19 @@ class ColourCommand : Command {
 			return;
 		}
 
-		info["colour"] = cast(string) [colours[args[1]]];
-
-		server.SavePlayerInfo(args[0], info);
+		player.colour = colours[args[1]];
+		player.SaveInfo();
 
 		server.SendGlobalMessage(
 			format(
 				"%s&e's colour was changed to %s",
-				Client.GetDisplayName(args[0], info),
+				player.GetDisplayName(),
 				args[1]
 			)
 		);
 
 		if (server.PlayerOnline(args[0])) {
-			auto player = server.GetPlayer(args[0]);
-
-			player.info = info;
+			server.GetPlayer(args[0]).ReloadInfo();
 		}
 	}
 }
@@ -101,10 +99,10 @@ class TitleCommand : Command {
 	}
 
 	override void Run(Server server, Client client, string[] args) {
-		JSONValue info;
+		Player player;
 
 		try {
-			info = server.GetPlayerInfo(args[0]);
+			player = server.GetPlayerInfo(args[0]);
 		}
 		catch (ServerException e) {
 			client.SendMessage(format("&c%s", e.msg));
@@ -129,22 +127,17 @@ class TitleCommand : Command {
 			return;
 		}
 
-		info["title"] = title;
-
-		server.SavePlayerInfo(args[0], info);
+		player.title = title;
+		player.SaveInfo();
 
 		server.SendGlobalMessage(
 			format(
-				"%s&e's title was changed to %s",
-				Client.GetDisplayName(args[0], info),
-				title
+				"%s&e's title was changed to %s", player.GetDisplayName(), title
 			)
 		);
 
 		if (server.PlayerOnline(args[0])) {
-			auto player = server.GetPlayer(args[0]);
-
-			player.info = info;
+			server.GetPlayer(args[0]).ReloadInfo();
 		}
 	}
 }
@@ -181,10 +174,10 @@ class NickCommand : Command {
 	}
 
 	override void Run(Server server, Client client, string[] args) {
-		JSONValue info;
+		Player player;
 
 		try {
-			info = server.GetPlayerInfo(args[0]);
+			player = server.GetPlayerInfo(args[0]);
 		}
 		catch (ServerException e) {
 			client.SendMessage(format("&c%s", e.msg));
@@ -204,14 +197,13 @@ class NickCommand : Command {
 			return;
 		}
 
-		auto oldNick = info["nickname"].str;
+		auto oldNick = player.nickname;
 		if (oldNick == "") {
 			oldNick = client.username;
 		}
 
-		info["nickname"] = nick;
-
-		server.SavePlayerInfo(args[0], info);
+		player.nickname = nick;
+		player.SaveInfo();
 
 		server.SendGlobalMessage(
 			format(
@@ -221,9 +213,7 @@ class NickCommand : Command {
 		);
 
 		if (server.PlayerOnline(args[0])) {
-			auto player = server.GetPlayer(args[0]);
-
-			player.info = info;
+			server.GetPlayer(args[0]).ReloadInfo();
 		}
 	}
 }

@@ -23,6 +23,7 @@ import mcyeti.types;
 import mcyeti.world;
 import mcyeti.backup;
 import mcyeti.client;
+import mcyeti.player;
 import mcyeti.autosave;
 import mcyeti.protocol;
 import mcyeti.heartbeat;
@@ -491,7 +492,7 @@ class Server {
 			}
 		}
 		
-		if (client.authenticated && !client.info["banned"].boolean) {
+		if (client.authenticated && !client.banned) {
 			string msg = message != ""?
 				format(
 					"&c-&f %s disconnected (%s)", client.GetDisplayName(),
@@ -546,7 +547,7 @@ class Server {
 		throw new ServerException("No such world");
 	}
 
-	JSONValue GetPlayerInfo(string username) {
+	Player GetPlayerInfo(string username) {
 		string infoPath = format(
 			"%s/players/%s.json",
 			dirName(thisExePath()), username
@@ -556,7 +557,11 @@ class Server {
 			throw new ServerException("Player not found");
 		}
 
-		return readText(infoPath).parseJSON();
+		auto json = readText(infoPath).parseJSON();
+		auto ret  = new Player();
+
+		ret.InfoFromJSON(json);
+		return ret;
 	}
 
 	Client GetPlayer(string username) {
@@ -567,15 +572,6 @@ class Server {
 		}
 
 		throw new ServerException("Player not found");
-	}
-
-	void SavePlayerInfo(string username, JSONValue data) {
-		string infoPath = format(
-			"%s/players/%s.json",
-			dirName(thisExePath()), username
-		);
-
-		std.file.write(infoPath, data.toPrettyString());
 	}
 
 	void Update() {
@@ -611,7 +607,7 @@ class Server {
 		}
 
 		if (success) {
-			Client newClient = new Client(newClientSocket);
+			Client newClient = new Client(newClientSocket, this);
 
 			newClient.socket.blocking = false;
 
